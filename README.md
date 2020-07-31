@@ -1,6 +1,6 @@
 # Learn PostgreSQL
 
-This repository is related to the Packt book **[Learn PostgreSQL](https://www.packtpub.com/data/learn-postgresql-12){:target="_blank"}**, authored by *[Luca Ferrari](https://fluca1978.github.io){:target="_blank"}* and *[Enrico Pirozzi](http://www.pgtraining.com/chi-siamo/enrico-pirozzi){:target="_blank"}*.
+This repository is related to the Packt book **[Learn PostgreSQL](https://www.packtpub.com/data/learn-postgresql-12)**, authored by *[Luca Ferrari](https://fluca1978.github.io)* and *[Enrico Pirozzi](http://www.pgtraining.com/chi-siamo/enrico-pirozzi)*.
 
 <center>
 <a href="https://www.packtpub.com/data/learn-postgresql-12" target="_blank" >
@@ -10,7 +10,7 @@ This repository is related to the Packt book **[Learn PostgreSQL](https://www.pa
 
 # What is this book about?
 
-The book is about [PostgreSQL](https://www.postgresql.org){target:_blank}, the world most advanced open source database. In particular, the book focuses on PostgreSQL *versions 12 and 13*, respectively the latest production ready release and the upcoming new major release. However, the book will be a very good starting point even for versions greater than those, as well as many examples will run also on previous versions.
+The book is about [PostgreSQL](https://www.postgresql.org), the world most advanced open source database. In particular, the book focuses on PostgreSQL *versions 12 and 13*, respectively the latest production ready release and the upcoming new major release. However, the book will be a very good starting point even for versions greater than those, as well as many examples will run also on previous versions.
 
 ## Book Outline
 
