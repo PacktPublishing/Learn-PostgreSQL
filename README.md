@@ -1,6 +1,6 @@
 # Learn PostgreSQL
 
-This repository is related to the Packt book **[Learn PostgreSQL](https://www.packtpub.com/data/learn-postgresql-12){:target="_blank"}**, authored by *Luca Ferrari* and *Enrico Pirozzi*.
+This repository is related to the Packt book **[Learn PostgreSQL](https://www.packtpub.com/data/learn-postgresql-12){:target="_blank"}**, authored by *[Luca Ferrari](https://fluca1978.github.io){:target="_blank"}* and *[Enrico Pirozzi](http://www.pgtraining.com/chi-siamo/enrico-pirozzi){:target="_blank"}*.
 
 ## What is this book about?
 
