@@ -1,0 +1,461 @@
+#+title: Managing Users and Connections
+#+subtitle: Chapter 03
+
+* You Will Learn
+- The concepts behind users, groups and roles
+- How to manage PostgreSQL users and groups
+- How to manage incoming connections to databases
+
+
+* You Need to Know
+- basic Unix knowledge
+- basic PostgreSQL interaction and connectivity
+
+* DONE Abstract
+
+In order to be able to interact with a database in the cluster, you need to have at least one user.
+By default, when installing a new cluster, a single administrator user (named postgres) is created. While it is possible to handle all the connections, applications and databases by that single administrative user, it is much more better to create different users with different properties and privileges, as well as login credentials, for every specific task.
+
+PostgreSQL provides a very rich users management, and single users can be grouped into different groups at the same time. Moreover, groups can be nested into other groups, so that you can end up with a very accurate representation of your account model.
+Thanks to this accurate representation, and thanks to the fact that every user and group can be assigned different properties and privileges, it is possible to apply fine grain permissions to every user depending on the specific task and activity involved in the database.
+
+This chapter introduces you to the concepts behind users and groups and their relationships.
+The chapter will focus mainly on the login properties of roles (either users or groups) and how PostgreSQL can prevent specific users to connect to specific databases.
+
+
+* DONE Users and Groups: a Role to Rule Them All!
+In order to connect interactively or via an application to a PostgreSQL database, you need to have login credentials. In particular, a database user, that is an user allowed to connect to that specific database, mus exist.
+
+Database users are somehow similar to operating system users: the have an username and a password (usually encrypted), and are well known to the PostgreSQL cluster.
+Similarly to operating system users, even database users can be grouped into "user groups" in order to ease the massive admnistration of users.
+
+In SQL, and therefore even in PostgreSQL, both the concepts of a single user account and a group of accounts is stereotyped by the concept of role.
+
+A role can be a single account, a group of accounts, or even both depending on how you configure it.
+However, in order to ease the management, a role should express one and only concept at the time, that is it should be either a single user or a single group, but not both.
+
+Every role must have an unique name, that is an unique identifier, usually called the username.
+A role represents a collection of database permissions and connection properties, the two are orthogonal. You can set up a role simply as a container for other roles, demanding to the latters the permission assignment, or can have a role that holds all the permissions for contained roles, or mix and match the approaches.
+
+* DONE Managing Roles
+
+Roles can be managed by means of three main SQL statements: CREATE ROLE to create a role from scratch, ALTER ROLE to change some role properties (e.g., login password) and DROP ROLE to remove an existing role.
+
+In order to use the SQL statements to create new roles, and then manage them, it is necessary to connect to a database in the cluster. The superuser role postgres can be used to that aim, at least initially; such role is created when the database cluster is initialized. Using the role postgres and a template database is the most common way to create your initial roles.
+
+A role is identified by a string that represents the role name, or better the account name of that role. Such name must be unique across the system, that means you cannot have two different roles with an identical name, and must be made by letters, digits, and some symbols like the underscore.
+
+** DONE The CREATE ROLE Statement
+In order to create a new role, either a single user account or a group container, you need to use the CREATE ROLE statement. The statement has the following short synopsis and requires a mandatory parameter that is the role username:
+
+#+begin_src sql
+CREATE ROLE name [ [ WITH ] option [ ... ] ]
+#+end_src
+
+The options that you can specify in the statement range from the account password, the capability to log-in interactively, and the superuser privileges. Please remember that, unlike other systems, in PostgreSQL you can have as many "superusers" as you want, and every one has the same live-or-die rights on the cluster.
+
+Almost every option of the CREATE ROLE statement has a positive form, that adds the capability to the role, and a negative form (with a NO prefix) that exclude the capability from the role. As an example, the SUPERUSER option adds the capability to act as a cluster superuser, while the NOSUPERUSER option removes it from the role.
+
+In this chapter we will focus on the login capabilities, that is the restricted set of options that allows a role to login to the cluster. Other options will be discussed in the Chapter 10, since they are more related to the security aspects of the role.
+
+*** DONE Role Passwords, Connections and Availability
+Connecting to a database in the cluster means the role must authenticate itself, and therefore there must be a classical username/password exchange.
+When an user attempts to connect to a database, PostgreSQL checks the login credentials and a few other properties of the user to ensure it is allowed to login and has valid credentials.
+The main options that allow you to manipulate and manage the login attempts are:
+- PASSWORD or ENCRYPTED PASSWORD are equivalent options and allows you for setting the login password for the role. Both the options exists for backward compatibility with older PostgreSQL versions, but nowdays the cluster stores role password always in an ecrypted form, so the usage of ENCRYPTED PASSWORD does not add any value to the PASSWORD option;
+- PASSWORD NULL explicitly forces a null (not empty) password, preventing the user to login with any password. This option can be used to deny password based authentication;
+- CONNECTION LIMIT <n> allows the user to open no more than <n> simultaneous connections to the cluster, without any regard to a specific database. This is often useful to prevent an user to waste resources on the cluster;
+- VALID UNTIL allows you to specify an instant (in the future) to which the role will "expire".
+
+Setting the password for a specific role does not mean that such role will be able to connect to the cluster: in order to be allowed to interactively login, the role must also have the LOGIN option. In other words, the following statement will not allow the user to login:
+
+#+begin_src sql
+template1=# CREATE ROLE luca
+            WITH PASSWORD 'xxx';
+#+end_src
+
+because the default option when not specified is NOLOGIN (i.e., prevent interactive login). Therefore, in order to define interactive users, remember to add the LOGIN option at role creation:
+
+#+begin_src sql
+template1=# CREATE ROLE luca
+            WITH LOGIN PASSWORD 'xxx';
+#+end_src
+
+As already stated, multiple options can be written in any order, so the above represents the very same statement, but in a form less human-readable:
+
+#+begin_src sql
+template1=# CREATE ROLE luca
+            WITH PASSWORD 'xxx' LOGIN;
+#+end_src
+
+
+The VALID UNTIL option allows you to define a date, or even a timestamp (i.e., an instant) in the future to which the role password is going to expire, that is it will no more be allowed to log-in the cluster.
+Of course, this option does make sense only for interactive roles, that is those who have the LOGIN capability.
+As an example, the following role will be prevented to login after Christmas 2020:
+
+#+begin_src sql
+template1=# CREATE ROLE luca
+            WITH LOGIN PASSWORD 'xxx'
+            VALID UNTIL '2020-12-25 23:59:59';
+#+end_src
+
+
+
+** DONE Using a Role as a Group
+A group is a role that contains other roles, it's that simple!
+
+Usually, when you want to create a group, all you need to do is to create a role without the LOGIN option, and then you add all the members one after the other to the "containing role". Adding a role to a "containing role" makes the latter a group.
+
+In order to create a role as a member of a specific group, the IN ROLE option can be used. Such option accepts the name of the group (that, in turn, is another role) to which the newly created role will become a member of.
+As an example, in Listing 1 you can see the creation of the group book_authors and the addition of the role members luca and enrico.
+
+#+begin_src sql
+template1=# CREATE ROLE book_authors
+            WITH NOLOGIN;
+CREATE ROLE
+template1=# CREATE ROLE luca
+            WITH LOGIN PASSWORD 'xxx'
+            IN ROLE book_authors;
+CREATE ROLE
+template1=# CREATE ROLE enrico
+            WITH LOGIN PASSWORD 'xxx'
+            IN ROLE book_authors;
+CREATE ROLE
+
+#+end_src
+#+caption: Listing 1 - Creating a group with two user members.
+
+#+begin_quote
+The IN GROUP option is an obsolete synonim for IN ROLE.
+#+end_quote
+
+It is also possible to add members to a group using the special GRANT statement. The GRANT statement is the general SQL statement that allows for fine privilege tuning (more on this later); PostgreSQL extends the SQL syntax allowing the "granting of a role to another role". When you grant a role to another, the former becomes a member of the latter. In other words, assuming all roles already exist without any particular association, the following adds the role enrico to the group book_authors:
+
+#+begin_src sql
+template1=# GRANT ROLE book_authors
+            TO enrico;
+#+end_src
+
+
+Every group can have one or more admin members, that are allowed to add new members to the group. The ADMIN option allows to specify the member that will be associated as an administrator of the newly created group.
+For instance, in Listing 2 you can see the creation of the new group book_reviewers with luca as administrator: that means that the user luca, even if not being a cluster superuser, will be able to add new members to the group book_reviewers.
+
+#+begin_src sql
+template1=# CREATE ROLE book_reviewers
+            WITH NOLOGIN
+            ADMIN luca;
+CREATE ROLE
+#+end_src
+#+caption: Listing 2 - Creating a group and specifying a role as administrator.
+
+As you can see in Listing 2, the ADMIN option can be used in CREATE ROLE only if the administrator role already exists: in the example the role luca must have been created before the group he is going to administer.
+The GRANT statement can solve the problem: the clause WITH ADMIN OPTION allows the membership of a role with the administrative privilege.
+As an example, Listing 3 shows how to make user enrico also an administrator of the book_reviewers group; please note that the full WITH ADMIN OPTION has to be spelled out.
+
+#+begin_src sql
+template1=# GRANT book_reviewers
+            TO enrico
+            WITH ADMIN OPTION;
+GRANT ROLE
+#+end_src
+#+caption: Listing 3 - Making a user an administrator of a group.
+
+What happens if a group role has the LOGIN option? The group will still be a role container, but it can act also as a single user account with the capability to login. While this is possible, it is more common practice to prevent group roles to login to avoid confusion.
+
+** DONE Removing an Existing Role
+In order to remove an existing role you need to use the DROP ROLE statement. The statement has a very simple synopsis:
+
+#+begin_src sql
+DROP ROLE [ IF EXISTS ] name [, ...]
+#+end_src
+
+You need to specify only the role name you want to delete, or in the case you need to delete multiple roles, you can specify them as a comma separated list.
+In order to be deleted, the role must exist, therefore if you try to remove a non-existant role you will receive an error:
+
+#+begin_src sql
+template1=# DROP ROLE this_role_does_not_exists;
+ERROR:  role "this_role_does_not_exists" does not exist
+#+end_src
+
+As you can see, PostgreSQL warns you that it cannot delete a role if the former does not exists.
+
+#+begin_quote
+As a rule of thumb: you cannot break PostgreSQL!
+PostgreSQL will self-protect itself from your mistakes, and does a very good job in keeping your data at safe!
+#+end_quote
+
+The DROP ROLE statement supports the IF EXISTS cluase, that makes PostgreSQL not complaining about the deletion of a role that is missing:
+
+#+begin_src sql
+template1=# DROP ROLE IF EXISTS this_role_does_not_exists;
+NOTICE:  role "this_role_does_not_exists" does not exist, skipping
+DROP ROLE
+#+end_src
+
+As you can see, this time PostgreSQL does not raise an error, rather a notice about the fact that the role does not exists. However, it executes the statement, doing nothing, but reporting success instead of failure.
+Why could this be useful? Imagine you have an automated task that is in charge of deleting several roles: if the DROP ROLE reports a failure your task could be interrupted, while with IF EXISTS you will be assured that PostgreSQL will not cause an abort due to a missing role.
+
+#+begin_quote
+There are several statement that support the IF EXISTS clause, as you will see in later chapter. The idea is to avoid reporting an error when you could not be interesting in catching it.
+#+end_quote
+
+What happens if you drop a group? Member roles will stay in place, but of course the association with the group will be lost (since the group has been deleted). In other words, deleting a group does not cascades to its members.
+
+** DONE Inspecting Roles
+Now that you know how to manage roles, how can you inspect existing roles, including yours?
+There are different ways to get information about existing roles, and all rely on the PostgreSQL catalogs, the only source of instrospection about the cluster.
+
+In order to get information about what role you are running, use the special statement CURRENT_ROLE: you can query it via a SELECT statement ( such statements will be presented in later chapters, so for now just blindly use it as shown here):
+
+#+begin_src sql
+template1=# SELECT current_role;
+ current_role
+--------------
+ postgres
+(1 row)
+#+end_src
+
+If you connect to the database with another user, you will see different results:
+
+#+begin_src sql
+$ psql -U luca template1
+psql (12.1)
+Type "help" for help.
+
+template1=> SELECT current_role;
+ current_role
+--------------
+ luca
+(1 row)
+#+end_src
+
+Knowing your own role is important, but getting information about existing roles and their properties can be even more illuminating.
+psql provides the special \du (describe users) command to list all the available roles within the system:
+
+#+begin_src sql
+template1=# \du
+                                       List of roles
+  Role name   |                         Attributes                         |   Member of
+--------------+------------------------------------------------------------+----------------
+ book_authors | Cannot login                                               | {}
+ enrico       |                                                            | {book_authors}
+ luca         | 1 connection                                               | {book_authors}
+ postgres     | Superuser, Create role, Create DB, Replication, Bypass RLS | {}
+#+end_src
+
+
+The "Attributes" column shows the options and properties of the role, many of which will be discussed in Chapter 10. With regard to the login properties, if a role is prevented from connecting interactively to the cluster, a "Cannot login" information will be displayed as, for instance, for the book_authors line.
+
+You can get information about a specific role by querying directly the pg_roles catalog, a tale that contains information about all PostgreSQL roles. For example, to get the basic connection information for the role luca, you can execute the query shown in Listing 4.
+
+#+begin_src sql
+template1=# SELECT rolname, rolcanlogin, rolconnlimit, rolpassword
+            FROM pg_roles
+            WHERE rolname = 'luca';
+-[ RECORD 1 ]--+---------
+rolname        | luca
+rolcanlogin    | t
+rolconnlimit   | 1
+rolpassword    | ********
+#+end_src
+#+caption: Listing 4 - Inspecting a specific role via pg_roles.
+
+
+
+As you can see from Listing 4, the password is not displayed for security reasons, even if the cluster superuser is asking for it. It is not possible to get the password in plain text: as already explained the passwords are always stored encrypted. The special catalog pg_authid represents the backbone for the pg_roles information, and can be queried with the very same statement, but reports the user password (as encrypted text). Listing 5 shows the result of querying pg_authid for the very same user as in Listing 4, note how the rolpassword field this time contains some more useful information.
+
+#+begin_src sql
+template1=# SELECT rolname, rolcanlogin, rolconnlimit, rolpassword
+            FROM pg_authid WHERE rolname = 'luca';
+-[ RECORD 1 ]--+------------------------------------
+rolname        | luca
+rolcanlogin    | t
+rolconnlimit   | 1
+rolpassword    | md5bd18b4163ec8a322833d8d7a6633c8ec
+#+end_src
+#+caption: Listing 5 - Inspecting a role via pg_authid.
+
+The password is represented as an hash and the initial part specifies the encryption alghoritm used: MD5. You will learn more about password encryption in Chapter 10.
+
+
+
+
+* DONE Managing Incoming Connections at the Role Level
+
+When a new connection is established to a cluster, PostgreSQL validates the incoming request at the role level. The fact that the role has the LOGIN property does not suffice for it to open a new connection to any database within the cluster. In particular PostgreSQL checks the incoming connection request against a kind of firewall table, formerly know as Host Based Access, that is defined within the pg_hba.conf file.
+If the table states that the role can open the connection to the specified database, the connection is granted (assuming it has the LOGIN property), otherwise it is reject.
+
+Every time you modify the pg_hba.conf file, you need to inform the cluster to reload the new rules via a HUP signal, or by means of a reload command in pg_ctl.
+Therefore, the usual workflow when dealing with pg_hba.conf is like the following:
+
+#+begin_src shell
+$ $EDITOR $PGDATA/pg_hba.conf
+
+$ sudo -u postgres pg_ctl reload -D $PGDATA
+#+end_src
+
+** DONE The Syntax of pg_hba.conf
+
+The file pg_hba.conf file contains the "firewall" for incoming connections.
+Every line within the file has the following structure:
+
+#+begin_src shell
+<connection-type> <database> <role> <remote-machine> <auth-method>
+#+end_src
+
+where:
+- connection-type is the type of connection supported by PostgreSQL, either local (meaning via operating system sockets), host (TCP/IP connection) or hostssl (TCP/IP encrypted connection);
+- database is a name of a specific database the line refers to, or the special keyword all to mean every available database;
+- role is the specific role username the line refers to, or the special keyword all to mean all available roles (and groups);
+- remote-machine is the hostname, IP address or subnet from which the connection is expected. The special keyword all does match any remote machine the connection is established from, while the special keywords samehost or samenet match respectively the localhost or the whole network the PostgreSQL cluster is running within;
+- auth-method dictates how the connection must be handled, more in general how the login credentials have to be checked. The main methods are scram-sha-256 (the most robust since PostgreSQL 10), md5 (the one used in older versions), reject to always refuse the connection, and trust to always accept the connection without any regard to supplied credentials.
+
+In order to better understand how the system works, the following is an excerpt of a possible pg_hba.conf file:
+
+#+begin_src shell
+host    all       luca     carmensita       scram-sha-256
+hostssl all       test     192.168.222.1/32 scram-sha-256
+host    digikamdb pgwatch2 192.168.222.4/32 trust
+host    digikamdb enrico   carmensita       reject
+#+end_src
+
+The first line indicates that the user luca can connect to every database within the cluster (all clause) via a TCP/IP connection (host clause) incoming from an host named carmensita, but he must provide valid username/password to verify the SCRAM authentication method.
+The second line states the user test can connect to every database in the system over an SSL encrypted connection (hostssl clause) but only from a machine that has the IPv4 address of 192.168.222.1; again the credentials must pass the SCRAM authentication method.
+The third line states that the access to the digikamdb database is granted only to the pgwatch2 user over a non-ecrypted connection from the host 192.168.222.4; this time the access is granted (trust) without any credential required.
+
+Finally, the last line rejects any connection incoming from the host named carmensita, opened by the user enrico against the digikamdb; in other words enrico is not able to connect to digikamdb from the carmensita host.
+
+*** Order of pg_hba.conf Rules
+
+The order by which the rules are listed in the pg_hba.conf file does matter: the first rule that satisfies the logic is applied, and the others are skipped. In order to better understand, imagine we want to allow luca to connect to any database in the cluster except forumdb, the following does not make this true:
+
+#+begin_src shell
+host all     luca all scram-sha-256
+host forumdb luca all reject
+#+end_src
+
+Why the above does not work?
+When the role luca attempts to establish a connection to the cluster, the machine from which the connection is attempted is matched again the 'all' keyword for the line containing 'luca', then the database name is matched against the 'all' keyword for the database field. Since therefore, both the remote machine and the database name are subsets of 'all', the connection is passed through the SCRAM-256 authentication method: if the user succeed in the authentication the connection is opened.
+The rejet line is therefore skipped because the first line does match. On the other hand, exchanging the rules order like in the following does work:
+
+#+begin_src shell
+host forumdb luca all reject
+host all     luca all scram-sha-256
+#+end_src
+
+In this way, when luca tries to connect to a database, he gets rejected if the database is forumdb, otherwise he can connect.
+
+As a rule of thumb, remember to explicitly place rejecting rules on the top of the rule list.
+
+*** Merging Multiple Lines into a Single One
+
+One line declares at least one rule, but it is possible to merge multiple lines into a single one.
+In fact, the role, database and remote-machine fields allow for the definition of multiple matches, each one separated by a ',' comma.
+As an example, suppose we want to give access to both roles luca and enrico (from the same network the cluster is running into) to  the forumdb and digikamdb databases, so that pg_hba.conf looks like the following:
+
+#+begin_src shell
+host forumdb   luca   samenet scram-sha-256
+host forumdb   enrico samenet scram-sha-256
+host digikamdb luca   samenet scram-sha-256
+host digikamdb enrico samenet scram-sha-256
+#+end_src
+
+Since the database and the role fields can list more than one item, the above can be shrinked into the following one:
+
+#+begin_src shell
+host forumdb,digikamdb   luca   samenet scram-sha-256
+host forumdb,digikamdb   enrico samenet scram-sha-256
+#+end_src
+
+We can shrink the rules one step further since the machien from which the database connection can be established is literally the same for both the rules, and therefore the final result is:
+
+#+begin_src shell
+host forumdb,digikamdb   luca, enrico  samenet scram-sha-256
+#+end_src
+
+
+*** Using Groups Instead of Single Roles
+The role field in every pg_hba.conf rule can be substituted by the name of a group (remember that a group is itself a role). However, in order to make the rule to be valid for every member of the group, you have to preceed the group name with a '+' plus sign.
+
+To better understand, consider the example of the group forum_stats group that includes the luca member. The following rule will not allow the role luca to access the forumdb database:
+
+#+begin_src shell
+host forumdb forum_stats all scram-sha-256
+#+end_src
+
+even if the user is a member of such a role, because the cluster thinks the forum_stats role must be matched exactly:
+
+#+begin_src shell
+$ psql -U luca forumdb
+psql: error: could not connect to server:
+FATAL:  no pg_hba.conf entry for host "192.168.222.1", user "luca", database "forumdb", SSL off
+#+end_src
+
+On the other hand, if we clearly state to use the forum_stat role as a group name, and therefore allow all its members, the connection can be established. Therefore, changing the rule to.
+
+#+begin_src shell
+host forumdb +forum_stats all scram-sha-256
+#+end_src
+
+makes the connection possible:
+
+#+begin_src shell
+$ psql  -U luca forumdb
+psql (12.1)
+Type "help" for help.
+
+forumdb=>
+#+end_src
+
+The pg_hba.conf rules, when applied to a group name (i.e., with the '+' preceeding the role name) include all the direct and undirect members.
+
+What if we want to allow every group member except one to access the database? Remembering that the rule engine stops at the first match, it is possible to place a reject rule before the group acceptance one. For example, to allow every member of the forum_stats group to access the database while, on the other hand, prevent the single role luca to connect, it is possible to write down the following:
+
+#+begin_src shell
+host forumdb luca         all reject
+host forumdb +forum_stats all scram-sha-256
+#+end_src
+
+The first line will prevent the role luca to connect, even if the following one allows every member of the forum_stats (including luca) to connect: the first match wins and therefore luca is locked out the database.
+
+*** Using Files Instead of Single Roles
+The role field of a rule can be specified also as a text file, both line or comma separated.
+This is handy when you to deal with long username or group names, or with lists produced automatically from bacth processes.
+
+If you specify the role field with an at-sign prefix ('@'), the name is interpreted as a line separated text file (as a relative name to the PGDATA directory). For instance, in order to reject connections to all the users and groups listed in the file rejected_users.txt, while allowing connection to all the usernames and groups specified in the allowed_users.txt file, the pg_hba.conf file have to look like the following snippet:
+
+#+begin_src shell
+host forumdb @rejected_users.txt   all reject
+host forumdb @allowed_users.txt    all scram-sha-256
+#+end_src
+
+And the following is the content of the rejected_users.txt file, followed by the allowed_users.txt file:
+
+#+begin_src shell
+$ sudo cat $PGDATA/rejected_users.txt
+luca
+enrico
+
+$ sudo cat $PGDATA/allowed_users.txt
++forum_stats, postgres
+#+end_src
+
+As you can see, it is possible to specify the file contents as either a line separated list of usernames or a comma separated list. It is also possible to specify which roles to use as a group by placing the '+' sign in fron of the role name.
+
+
+
+* DONE Summary
+
+Roles are a powerful stereotype to represent both single users and group of users.
+When a connection attempt to reach a database, PostgreSQL process the connection credential information through the Host Based Access control, so that it can immediatly establish or reject the connection depending on a sort of firewall-like rules.
+Moreover, single users and groups can have other limitation on the number of connections they can open against a database or against the whole cluster.
+
+In Chapter 10, you will see how to deal with security properties of users and groups, but before you proceed further there is the need to detail how PostgreSQL objects can be created and managed.
+
+* References
+- CREATE ROLE statement official documentation: <https://www.postgresql.org/docs/12/sql-createrole.html>
+- ALTER ROLE statement official documentation: <https://www.postgresql.org/docs/12/sql-alterrole.html>
+- DROP ROLE statement official documentation: <https://www.postgresql.org/docs/12/sql-droprole.html>
+- PostgreSQL pg_roles catalog details: <https://www.postgresql.org/docs/12/view-pg-roles.html>
+- PostgreSQL pg_authid catalog details: <https://www.postgresql.org/docs/12/catalog-pg-authid.html>
+- PostgreSQL Host Based Access rule details: <https://www.postgresql.org/docs/12/auth-pg-hba-conf.html>

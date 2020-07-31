@@ -1,0 +1,1033 @@
+#+title: Extending the database ecosystem: the Extension ecosystem
+#+subtitle: #16
+
+* Description :no_export:
+Extensions are a handy way to plug-in new functionalities in your cluster. This chapter will show you what an extension is, how to get and install an extension and how to search for already available extensions in the PostgreSQL ecosystem.
+
+
+* DONE Abstract
+  CLOSED: [2020-03-04 mer 16:29]
+
+Extension are a powerful way of packaging together related database objects, like tables, functions and routines, making simpler the management of the objects as a single unit.
+Extension allows you and other developers to literally extend the already rich PostgreSQL set of features by providing a clear, concise and accurate way of installing, upgrading and removing features and objects.
+
+In this chapter you will see what are extension and how they can be installed, upgrade or removed by means of automated tools or manually. Moreover, you will learn how to build your own extension from scratch so that you will be immediatly productive in packaging your own scripts and tools to distribute across other databases and PostgreSQL instances.
+
+You will learn:
+- what extension are
+- how to inspect installed extension, modify their main settings, upgrade or remove them
+- how to install a new extension manually or by means of automated tools
+- how to create an extension from scratch, including a way to upgrade it
+
+You need to know
+- how to use psql
+- basic knowledge about Unix make(1)
+- how to write your own SQL scripts, functions and routines
+
+* DONE Introduction to Extensions
+
+The SQL is a declarative language that allows you to create and manipulate objects, as well as data. You can group SQL statements into scripts, so that you can run the scripts in a more predictable and reproducible way. However, such scripts are seen by PostgreSQL as a sequence of unrelated commands, that is you are responsible for correlating such commands into appropriate scripts. Things get even worst when you have to deal with foreign languages or binary libraries: the cluster does know nothing about your aim and how every single object is related to each other. Luckily, extensions help getting order out of caos.
+
+An extension is a packaged set of files that can be installed into the cluster in order to provide more functionalities, therefore to "extend" the current cluster set of features.
+
+An extension can be something general, like a new data type, a new index type, or a service to send emails directly from within PostgreSQL, or it can be something really specific to a particular use case like a set of tables and data to provide ad-hoc configuration.
+An extension does not have any opinion on how you are going to use it, and therefore you are free to install and forget, or use in every database of your cluster.
+
+The main aim of the extension mechanism is to provide a common interface to administering new features. Thanks to extensions you have a common set of statements to deploy, install, upgrade and remove an extension as a whole thing within the cluster. It does not matter your extension is made up by a single function or a whole set of linked objects, the extension mechanism will handle all the objects at once making the administration easier.
+
+PostgreSQL has built a whole ecosystem around the concept of extensions, and therefore not only it provides statements to manage extensions, but also a platform to build new extensions and convert existing scripts into extensions. Then, extensions can be made publicly available by means of a global repository known as the PostgreSQL eXtensions Network (PGXN).
+
+You can think to extensions like modules in the Perl programming language (or, similarly, gems in Ruby, jars in Java and so on) and the PGXN as the CPAN to Perl (or PEAR to PHP, and so on).
+
+** DONE The Extension Ecosystem
+
+ The beauty of extensions is that they provide an uniform way to bundle modules that can be deployed (installed) and used into PostgreSQL. Developers are free to contribute expanding the number of modules available for PostgreSQL, and this rapidly has grown to what is now a full ecosystem.
+
+ Similarly to programming languages, like Perl, Python and alike, PostgreSQL now can be customized by means of add-ons and modules that share a common infrastructure, architecture and can be managed by the same statements without any regard to the features they provide.
+
+ Extensions are mainly collected into the PostgreSQL eXtension Network (PGXN), a repository that can be queried to get information about an extension, to download an extension (and a particular version of it), and can be updated with new modules.
+
+
+        The PGXN is somehow the same of CPAN to Perl  CTAN to LaTeX, PEAR to PHP, and so on.
+
+ While you can find PostgreSQL extensions all around the Internet, chances are you will interface with PGXN almost every time you need a new extension. PGXN is not a simple web site, or a code repository, but it is a full specification about four main parts: a search engine, an extension manager, an API (Application Program Interface) and a client.
+ The search engine allows users to search into the PGXN content for a specific extension. The manager is responsible for accepting new extensions (or new extension versions) and let user obtain them (i.e., distribute the extensions). The API defines how applications can interact with the manager and the search engine, and therefore how a client can be built.
+ There are two main clients available: the PGXN web site and the pgxnclient command line application. While we will discuss the pgxnclient application in the following subsections, you will see an example of usage of the PGXN web site later in the chapter.
+
+ Extensions are built on top of the PGXS (PostgreSQL eXtension System), that is the basic set of rules an extension must adhere to expose a common manageble interface. In particular, PostgreSQL provides an uniform Makefile that every extension should use to provide a set of common functionalities to install, upgrade and remove an extension. You can inspect the PGXS base makefile finding its location with pg_config:
+
+
+
+ $ pg_config --pgxs
+ /usr/local/lib/postgresql/pgxs/src/makefiles/pgxs.mk
+
+ The pgxs.mk is the base makefile that provides common functionalities to every extension, and its usage will become more clear when we will show how to create an extension from scratch.
+
+
+** DONE Parts of an Extension
+
+An extension is made by two main components: a control file and a script file.
+
+The control file provides information about the extension and how to manage it, for instance where and how to install it, how to upgrade it, and so on. The control file is somehow the metadata of the extension.
+
+The script file is an SQL file that contains statements to create database objects that are part of the extension. To some extent, this is the content of the extension.
+
+When you ask PostgreSQL to install an extension, the system inspects the control file to get information about the extension, ensures the extension has not been already installed, and then proceed to execute the script file within a transaction. As the end result, you are going to have the extension available on your database.
+
+Every extension has a version, so that you can decide precisely which version to install. If you do not specify any target version, PostgreSQL will suppose you want to interact with the latest version available.
+
+Extensions are installed into the share-directory of the cluster, usually found by executing the pg_config command with the --sharedir option, as an example:
+
+
+
+$ pg_config --sharedir
+/postgres/12/share/postgresql
+
+
+All the files that made up the extension will be placed into the share directory, and the cluster expects the files to be available there by the user that runs the cluster (usually the operating systsem user postgres).
+Once the files are available to the cluster, the extension must be selectively installed into every database that needs it; remember that PostgreSQL provides very strong isolation between databases, and therefore an extension loaded into a database is not automatically available into other database.
+However, please remember that template databases (see chapter 1) can be used as a skeleton for newly created databases, and therefore once you install an extension into a template database you will found such extension already available into all the other created databases.
+
+
+*** DONE The Control File
+    CLOSED: [2020-02-22 sab 17:03]
+An extension control file must have a name that is related to the extension and the '.control' suffix. For example, a valid name could be 'learnpg12.control'. 
+
+The control file is a text file where you can specify directives, that are instructions and metadata to let PostgreSQL handle the extension installation. Every directive has a name and a value. Most common directives are:
+- directory specifies the path to the extension script path;
+- default_version specify the version of the extension to install when the user does not specify any;
+- comment is a description of the extension and its aim;
+- requires is an optional list of other extensions needed to install and use this, and therefore represents a dependency list;
+- schema an SQL schema into which extension objects will be installed;
+- relocatable indicates if the extension can be moved into a user-selected schema;
+- superuser indicates if the extension can be installed also by non-superuser accounts (default to 'yes' meaning that only superusers can install the extension).
+
+
+There must be at least one control file per extension, and such file is known as the main control file. However, an extension can have additional control files (named as secondary control files).
+Every secondary control file must target a specific version and must have the same name of the main control file with the version number prefix with a double dashes; for instance if the main control file is learnpg12.control, the secondary files can be learnpg12--1.1.control, learnpg12--1.2.control and so on.
+
+*** DONE The Script File
+    CLOSED: [2020-02-22 sab 17:08]
+
+The script file contains plain SQL used to create extension objects.
+An extension object could be a table, a trigger, a function, or a binding for an external language.
+
+Every script file must be named after the extension name and with a suffix of '.sql'; the version of the extension is specified with a number preceeded by a double dashes. As an instance, the file learnpg12--1.0.sql creates objects for the version 1.0 of the extension.
+
+There must be at least one script file per extension, but it is possible to specify more than one: in such case every additional file must include the version to upgrade and the final target version. For example, the file learnpg12--1.0-1.1.sql provides an upgrade from version 1.0 to version 1.1.
+
+As already specified, the script file is executed into a transaction and therefore cannot interact itself with the transaction boundaries (i.e., it cannot issue neither a COMMIT nor a ROLLBACK). Similarly, executing into a transaction, a script file is prevented to execute everything that cannot be executed into a transaction block (e.g., utility commands like VACUUM).
+
+
+
+** DONE Managing an Extension
+   CLOSED: [2020-03-03 mar 16:38]
+
+
+Every extension is managed at a database level, meaning that every database that needs an extension must managed such extension lifecycle. In other words, there is not a per-cluster way of managing an extension and apply it to every database within the cluster.
+
+Extensions are mainly managed by means of three SQL statements: CREATE EXTENSION, DROP EXTENSION and ALTER EXTENSION, to respectively install an extension into a database, remove the extension from the database and modify extension attributes or upgrade it.
+
+Every extension is specified by a mnemonic name and a version; if not specified a version PostgreSQL assumes you want to deal with the latest available version or the one that is already installed.
+
+In the following subsections, each of the three management statements will be explained.
+
+*** DONE The CREATE EXTENSION Statement
+    CLOSED: [2020-03-03 mar 16:01]
+
+The CREATE EXTENSION statement allows you to install an existing extension into the current database.
+The synopsis of the statement is as follows:
+
+CREATE EXTENSION [ IF NOT EXISTS ] extension_name
+    [ WITH ] [ SCHEMA schema_name ]
+             [ VERSION version ]
+             [ FROM old_version ]
+             [ CASCADE ]
+
+
+The extension name is the mnemonic name for the extension, and as you can see you can specify the version number of the extension to install. In the case the extension depends on any other extension, the CASCADE option allows the system to automatically execute a recursive CREATE EXTENSION for the dependency.
+You can decide the schema into which the extension objects must be placed, and of course that does make sense only for such extensions that can be relocated.
+The FROM keyword is used for creating an extension by a non-extension module, and the latter is an obsolete way of packaging PostgreSQL objects and therefore will not be explained here.
+Last, as you can imagine, the IF NOT EXITS allows the command to gracefully fail in the case the extension has been already installed, more precisely doing nothing in the case the extension has been already installed into the database.
+
+
+In order to better see how CREATE EXTENSION works, assume we want to install the PL/Perl procedural language into the forumdb database; since the PL/Perl extension is available as the PostgreSQL contrib module, you should have the extension already available within the cluster, therefore in order to install you have to do the following:
+
+
+forumdb=# CREATE EXTENSION plperl;
+CREATE EXTENSION
+
+Please note that the PL/Perl extension (mnemonic name plperl) requires the installation by means of the database administrator. If you try to install the same extension again, the command fails unles you use the IF NOT EXISTS clause:
+
+
+
+forumdb=# CREATE EXTENSION plperl;
+ERROR:  extension "plperl" already exists
+
+forumdb=# CREATE EXTENSION IF NOT EXISTS plperl;
+NOTICE:  extension "plperl" already exists, skipping
+CREATE EXTENSION
+
+
+As another easy example, we can install the pg_stat_statements extension at a specific version:
+
+
+forumdb=# CREATE EXTENSION pg_stat_statements VERSION '1.4';
+CREATE EXTENSION
+
+
+
+*** DONE Viewing Installed Extensions
+    CLOSED: [2020-03-03 mar 16:01]
+
+In psql terminal it is possible to get a list of installed extension by means of the \dx special command:
+
+
+forumdb=# \dx
+                                     List of installed extensions
+        Name        | Version |   Schema   |                        Description                        
+--------------------+---------+------------+-----------------------------------------------------------
+ pg_stat_statements | 1.4     | public     | track execution statistics of all SQL statements executed
+ plperl             | 1.0     | pg_catalog | PL/Perl procedural language
+ plpgsql            | 1.0     | pg_catalog | PL/pgSQL procedural language
+(3 rows)
+
+
+
+The very same information can be found out of the special catalog pg_extension, that can be joined with pg_namespace to extract human readable information about the schema the extension is living into:
+
+
+
+forumdb=# SELECT x.extname, x.extversion, n.nspname 
+          FROM pg_extension x JOIN pg_namespace n 
+          ON n.oid = x.extnamespace;
+
+      extname       | extversion |  nspname   
+--------------------+------------+------------
+ plpgsql            | 1.0        | pg_catalog
+ plperl             | 1.0        | pg_catalog
+ pg_stat_statements | 1.4        | public
+(3 rows)
+
+
+
+
+*** DONE Viewing available extension versions
+    CLOSED: [2020-03-03 mar 16:37]
+
+It is possible to inspect the cluster to get information about available extension versions, that means versions you can actually install on a database.
+The special catalog pg_available_extension_versions allows you to get all the available versions for any available extension. As an example, the pg_stat_statements extension has the following values available on the cluster:
+
+
+forumdb=# SELECT name, version 
+          FROM pg_available_extension_versions 
+          WHERE name = 'pg_stat_statements';
+
+        name        | version 
+--------------------+---------
+ pg_stat_statements | 1.4
+ pg_stat_statements | 1.5
+ pg_stat_statements | 1.6
+(3 rows)
+
+
+This is useful to know that the pg_stat_statements extension can be installed in a version between 1.4 and 1.6.
+
+
+*** DONE The ALTER EXTENSION Statement
+    CLOSED: [2020-03-03 mar 16:34]
+
+The ALTER EXTENSION statement is very rich and complex and allows you to fully modify an existing extension. The statement allows four main changes to an existing extension:
+
+- upgrade the extension to a new version;
+
+- set the schema of a relocatable extension;
+
+- add a database object to the extension;
+
+- remove a database object from the extension;
+
+
+In order to upgrade an already installed extension, you must specify the UPDATE clause specifying the target version number. As a simple example, imagine we want to upgrade the pg_stat_statements extension from version 1.4 to version 1.6; assuming the upgrade files are already installed into the cluster you can simply do the following:
+
+
+forumdb=# ALTER EXTENSION pg_stat_statements UPDATE TO '1.6';
+ALTER EXTENSION
+
+forumdb=# \dx pg_stat_statements
+                                   List of installed extensions
+        Name        | Version | Schema |                        Description                        
+--------------------+---------+--------+-----------------------------------------------------------
+ pg_stat_statements | 1.6     | public | track execution statistics of all SQL statements executed
+(1 row)
+
+
+
+
+Moving a relocatable extension from one schema to another is done by specifying the SET SCHEMA clause, for example:
+
+
+
+forumdb=# ALTER EXTENSION pg_stat_statements SET SCHEMA my_schema;
+ALTER EXTENSION
+
+forumdb=# \dx pg_stat_statements
+                                     List of installed extensions
+        Name        | Version |  Schema   |                        Description                        
+--------------------+---------+-----------+-----------------------------------------------------------
+ pg_stat_statements | 1.6     | my_schema | track execution statistics of all SQL statements executed
+(1 row)
+
+
+that will move all the extensions objects into the schema my_schema.
+
+If you want to remove an existing database object from one extension, for instance a table, you can use the DROP clause. As an example, if we remove the view pg_stat_statements from the extension with the same name, we can specify the object type (VIEW) after the DROP clause as follows:
+
+
+forumdb=# ALTER EXTENSION pg_stat_statements 
+          DROP VIEW my_schema.pg_stat_statements;
+ALTER EXTENSION
+
+
+What happens is that the view is still there, but unrelated to the extension and therefore the view and the extension have now a different lifecycle. In other words, changing the extension do not more imply any change to the view itself because the latter is now a user-defined object, not an extension-defined one.
+Of course, it is possible to add a new object to an extension with the ADD clause, that works as the opposite of the DROP one and requires the type of the object. For instance, to add back the pg-stat_statements view to the extension, it is possible to do the following:
+
+
+forumdb=# ALTER EXTENSION pg_stat_statements 
+          ADD VIEW my_schema.pg_stat_statements;
+ALTER EXTENSION
+
+You can also add your own objects to the extension, so for example adding a new table to the extension means that such extension will undergo the extension lifecycle:
+
+forumdb=# ALTER EXTENSION pg_stat_statements 
+          ADD TABLE my_schema.foo;
+ALTER EXTENSION
+
+The table foo is now part of the extension, and as such it cannot be anymore manipulated with statements that do not take care of the extension. For instance, if you try to delete the table PostgreSQL will prevent you from damaging the extension:
+
+
+forumdb=# DROP TABLE my_schema.foo;
+ERROR:  cannot drop table my_schema.foo because extension pg_stat_statements requires it
+HINT:  You can drop extension pg_stat_statements instead.
+
+You can now remove the table from the extension, or drop the whole extension.
+As you have seen, having extensions packages objects together in a way that prevents the single object to go alone on a different lifecycle.
+
+
+
+*** DONE The DROP EXTENSION Statement
+    CLOSED: [2020-03-03 mar 16:06]
+
+The DROP EXTENSION deletes an extension from the current database. The synopsis of the statement is the following:
+
+
+DROP EXTENSION [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]
+
+The command supports the IF EXISTS clause as many other statements do. Moreover, it is possible to specify more than one name of extension to be removed from the database.
+The CASCADE option removes also database objects that depends on the objects of the extension, while its counterpart RESTRICT makes the command fail if there are other objects that still depend on this extension.
+As an example, the following statement removes two extensions in a single pass, removing also all the objects that depend on those extensions:
+
+
+forumdb=# DROP EXTENSION plperl, plpgsql CASCADE;
+NOTICE:  drop cascades to function get_max(integer,integer)
+DROP EXTENSION
+
+
+As you can see, since the function get_max() was dependent on one of the two extension, the CASCADE option made the process to drop such function too.
+
+
+
+
+* DONE The PGXN Client
+
+The PGXN client is an external application, written in Python, that works as a command line interface to the PGXN. The application works by means of commands, that are actions like install, download, uninstall and so on, that allows a database administrator to instrument the PGXN and work with extensions.
+
+            To some extent, pgxnclient works the same as the command cpan (or cpanm) for Perl, zef for Raku, pip for Python, and so on.
+
+
+Being an external application means that pgxnclient is not distributed with PostgreSQL, and therefore you need to install it on your machines before you can use it. Installing pgxnclient is not mandatory in order to use PostgreSQL extensions, but it can make your life a lot easier.
+
+In the following subsections you will see how to install pgxnclient on main Unix and Unix-like operating systems, but before that it is important to let you know that once installed, you will find two executables on your system: pgxn and pgxnclient. You can think that those executables are aliases one of the other, even if this is not really the true (one wraps the other); however, you can use anyone you please obtaining the very same result. In this chapter, we will use pgxn as main executable.
+
+
+** DONE Installing PGXN Client on Debian Gnu/Linux
+
+pgxnclient is packaged for Debian GNU/Linux and derivates, and that means you can simply ask apt to install it:
+
+
+
+$sudo apt install pgxnclient
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+The following packages were automatically installed and are no longer required:
+  libecpg-compat3 libecpg-dev libecpg6 libgd-perl libgdbm5 libicu60 libperl5.26 libpgtypes3 libpython3.6 libpython3.6-minimal libpython3.6-stdlib
+  libreadline7 libtinfo5 perl-modules-5.26 pgadmin4-doc
+Use 'sudo apt autoremove' to remove them.
+The following NEW packages will be installed
+  pgxnclient
+0 to upgrade, 1 to newly install, 0 to remove and 2 not to upgrade.
+Need to get 31,4 kB of archives.
+After this operation, 162 kB of additional disk space will be used.
+Get:1 http://apt.postgresql.org/pub/repos/apt disco-pgdg/main amd64 pgxnclient all 1.3-1.pgdg19.04+1 [31,4 kB]
+Fetched 31,4 kB in 1s (54,5 kB/s)
+Selecting previously unselected package pgxnclient.
+(Reading database ... 392532 files and directories currently installed.)
+Preparing to unpack .../pgxnclient_1.3-1.pgdg19.04+1_all.deb ...
+Unpacking pgxnclient (1.3-1.pgdg19.04+1) ...
+Setting up pgxnclient (1.3-1.pgdg19.04+1) ...
+Processing triggers for man-db (2.8.5-2) ...
+
+Once the program has been installed, you can simply test its with the --version option, that will print the version number you installed:
+
+
+$ pgxn --version
+pgxnclient 1.3
+
+** DONE Installing PGXN Client on Fedora Linux
+
+pgxnclient is packaged for Fedora, so you can install it with the operating system package manager:
+
+$ sudo dnf install -y pgxnclient
+...
+
+Total download size: 105 k
+Installed size: 406 k
+Downloading Packages: pgxnclient-1.3-1.f30.x86_64.rpm
+...
+Installed:
+  pgxnclient-1.3-1.f30.x86_64
+Complete!
+
+Once the process has completed, you can query the application to verify it is actually working:
+
+
+$ pgxn --version
+pgxnclient 1.3
+
+** DONE Installing PGXN Client on FreeBSD
+
+pgxnclient is packaged for FreeBSD, so you can install it via the pkg tool or via the ports. The fastest way is by means of pkg, and all you have to do is asking to install the program:
+
+
+$ sudo pkg install --yes pgxnclient
+Updating FreeBSD repository catalogue...
+FreeBSD repository is up to date.
+All repositories are up to date.
+New packages to be INSTALLED:
+        pgxnclient: 1.2.1_3
+
+Number of packages to be installed: 1
+
+108 KiB to be downloaded.
+[1/1] Fetching pgxnclient-1.2.1_3.txz: 100%  108 KiB 110.4kB/s    00:01
+Checking integrity... done (0 conflicting)
+[1/1] Installing pgxnclient-1.2.1_3...
+[1/1] Extracting pgxnclient-1.2.1_3: 100%
+
+Once the process has finished, you can query the tool for its version to see if it is working:
+
+$ pgxn --version
+pgxnclient 1.2.1
+
+
+** DONE Installing PGXN Client from sources
+
+You can always install pgxnclient from sources, even if this is suggested only if you are on an operating system that does not provide a packaged version, or if the version is out of date with regard to your needs.
+You can download a compressed version of the latest release from the official project GitHub repository, for example:
+
+
+$ wget https://github.com/pgxn/pgxnclient/archive/v1.3.zip
+Connecting to github.com (github.com)|140.82.118.4|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://codeload.github.com/pgxn/pgxnclient/zip/v1.3 [following]
+--2020-02-28 19:53:23--  https://codeload.github.com/pgxn/pgxnclient/zip/v1.3
+Resolving codeload.github.com (codeload.github.com)... 140.82.114.9
+Connecting to codeload.github.com (codeload.github.com)|140.82.114.9|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [application/zip]
+Saving to: ‘v1.3.zip’
+
+2020-02-28 19:53:24 (313 KB/s) - ‘v1.3.zip’ saved [101925]
+
+Once you have the compressed archive, you need to decompress and enter in the directory that will be created with the same named after the version of pgxn you have downloaded, in our case pgxnclient-3.1. Once you are in the directory, executing the Python script setup.py will allow you to install the application:
+
+$ unzip v1.3.zip
+...
+$ cd pgxnclient-1.3
+$ sudo python setup.py install
+...
+Installed /usr/lib/python2.7/site-packages/pgxnclient-1.3-py2.7.egg
+Processing dependencies for pgxnclient==1.3
+Searching for six==1.12.0
+Best match: six 1.12.0
+Processing six-1.12.0-py2.7.egg
+six 1.12.0 is already the active version in easy-install.pth
+
+Using /usr/lib/python2.7/site-packages/six-1.12.0-py2.7.egg
+Finished processing dependencies for pgxnclient==1.3
+
+
+Once you have completed the installation, you can query the application to verify it is working:
+
+
+$ pgxn --version
+pgxnclient 1.3
+
+
+
+** DONE The PGXN Client command line interface
+
+The PGXN Client application provides a command line interface similar to other command based applications like cpan and git. You can get a list of main commands asking for help:
+
+
+$ pgxn help
+usage: pgxn [--version] [--help] COMMAND ...
+
+Interact with the PostgreSQL Extension Network (PGXN).
+
+optional arguments:
+  --version  print the version number and exit
+  --help     show this help message and exit
+
+available commands:
+  COMMAND    the command to execute. The complete list is available using
+             `pgxn help --all`. Builtin commands are:
+    check    run a distribution's test
+    download
+             download a distribution from the network
+    help     display help and other program information
+    info     print information about a distribution
+    install  download, build and install a distribution
+    load     load a distribution's extensions into a database
+    mirror   return information about the available mirrors
+    search   search in the available extensions
+    uninstall
+             remove a distribution from the system
+    unload   unload a distribution's extensions from a database
+
+
+
+Usually, you will use the following subset of commands:
+
+- search to search for a distribution by means of keywords;
+- info to have a closer look at an extension;
+- download to download (but not install) an extension;
+- install to download and install into the cluster an extension;
+- load to execute a CREATE EXTENSION against a specific database;
+- unload to execute a DROP EXTENSION against a specific database;
+- uninstall to remove from a cluster an extension.
+
+
+The smallest set of commands you probably will use are search, install and uninstall.
+
+For every command, you can get a more detailed help if you specify the command as argument for the help command itself. For example, to get more information about the search command you can do:
+
+
+
+
+$ pgxn help search
+usage: pgxn search [--help] [--mirror URL] [--verbose] [--yes]
+                   [--docs | --dist | --ext]
+                   TERM [TERM ...]
+
+search in the available extensions
+
+positional arguments:
+  TERM          a string to search
+
+optional arguments:
+  --help        show this help message and exit
+  --docs        search in documentation [default]
+  --dist        search in distributions
+  --ext         search in extensions
+
+global options:
+  --mirror URL  the mirror to interact with [default: https://api.pgxn.org/]
+  --verbose     print more information
+  --yes         assume affirmative answer to all questions
+
+
+In the following sections you will see how to use pgxn effectively to install an extension.
+
+* DONE Installing an Extension
+
+Usually, the workflow for getting an extension up and running involves a few steps. First, you need to find out which extension to use, at which version and the compatibility with your cluster. Once you have found out the extension you need, you have to install into the cluster.
+Installing into the cluster really means to deploy into the cluster, that is to move all the extension related files and libraries into the share directory of the cluster, so that PostgreSQL can seek the code required to run the extension.
+Last, you need to create the extension into every single database that needs it. Creating an extension is like enabling the usage of the extension within a specific database.
+
+
+In order to demonstrate the usage of an extension, we will install Orafce, the Oracle compatibilty functions extension. Describing the whole extension is not the aim of this section, so let's just say that this extension provides a set of functions, data types and other stuff that makes PostgreSQL looks like an Oracle database so that migrating an Oracle based application becomes easier.
+
+The following subsections describe every single step required to get the extension up and running.
+
+
+** DONE Installing an extension via pgxn
+*** DONE Step 1: Searching for an extension
+
+Usually, the first step in installing an extension is getting details about that, that means searching for an extension. In this particular case, we already know what extension we are looking for, but let's search it via pgxn:
+
+
+$ pgxn search --ext orafce
+orafce 3.9.0
+    Oracle's compatibility functions and packages
+
+
+The search command explores the ecosystem to find every extension related to our search criteria, in this particular case the extension name (--ext).
+Thanks to pgxn, we now know that we need to install orafce version 3.9.0, the latest stable available at the time of this writing.
+
+*** DONE Step 2: Installing the extension
+
+Once you have decided which extension you need, you can run the install command of pgxn to let the installation proceed. The installation worflow includes downloading, compiling (if needed) the source tree, packaging it and placing in the share directory of the PostgreSQL cluster.
+You can inspect the ongoing process in very rich detail thanks to the --verbose option, and if you are using pgxn by a user different from the one that runs the cluster, you can use the --sudo option to inform pgxn to switch the user when needed:
+
+
+$ pgxn install orafce --verbose --sudo
+DEBUG: running pg_config --libdir
+DEBUG: running command: ['/usr/local/bin/pg_config', '--libdir']
+DEBUG: testing if /usr/local/lib is writable
+DEBUG: opening url: http://api.pgxn.org/index.json
+DEBUG: opening url: http://api.pgxn.org/dist/orafce.json
+INFO: best version: orafce 3.9.0
+...
+/usr/bin/install -c -m 755  orafce.so '/usr/local/lib/postgresql/orafce.so'
+/usr/bin/install -c -m 644 .//orafce.control '/usr/local/share/postgresql/extension/'
+/usr/bin/install -c -m 644 .//orafce--3.9.sql .//orafce--3.2--3.3.sql .//orafce--3.3--3.4.sql .//orafce--3.4--3.5.sql .//orafce--3.5--3.6.sql .//orafce--3.6--3.7.sql .//orafce--3.7--3.8.sql .//orafce--3.8--3.9.sql  '/usr/local/share/postgresql/extension/'
+/usr/bin/install -c -m 644 .//README.asciidoc .//COPYRIGHT.orafce .//INSTALL.orafce '/usr/local/share/doc/postgresql/extension/'
+
+** DONE Installing an extension manually
+*** DONE Step 1: Searching for an extension
+
+The starting point is the PGXN web site, where you can search for a specific extension by name or by keywords.
+As picture 12.1 shows, once you browse the PGXN site you have a textbox where you can insert the keyword for the search, and since we already know the extension name we can choose "Extension" from the pull down menu
+
+
+!!!!!!!! INSERT PICTURE 1 !!!!!!!!!!!!!!!
+
+The result of our search will be displayed, as shown in picture 12.2, so we can enter the extension page with all the information and the documentation for the installation process.
+
+
+!!!!!!! INSERT PICTURE 2 !!!!!!!!!!!!!!!
+
+*** DONE Step 2: Installing the extension
+
+Once we have found the extension we are looking for, we can download it by clicking on the download icon as shown in picture 12.3. The result is that we will download a compressed zip file with all the stuff related to the extension.
+
+!!!!!!!! INSERT PICTURE 12.3 !!!!!!!!!!!
+
+In order to proceed further, you first have to decompress the archive you downloaded:
+
+
+$ unzip orafce-3.9.0.zip
+Archive:  orafce-3.9.0.zip
+   creating: orafce-3.9.0/
+...
+
+Now you can enter the directory created for this extension and compile it:
+
+
+$ cd orafce-3.9.0
+$ make
+cc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -Wno-unused-command-line-argument -O2 -pipe  -fstack-protector-strong -fno-strict-aliasing  -fPIC -DPIC -I. -I./ -I/usr/local/include/postgresql/server -I/usr/local/include/postgresql/internal  -I/usr/local/include -I/usr/local/include -I/usr/local/include  -c -o parse_keyword.o parse_keyword.c
+cc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -Wno-unused-command-line-argument -O2 -pipe  -fstack-protector-strong -fno-strict-aliasing  -fPIC -DPIC -I. -I./ -I/usr/local/include/postgresql/server -I/usr/local/include/postgresql/internal  -I/usr/local/include -I/usr/local/include -I/usr/local/include  -c -o convert.o convert.c
+...
+
+
+Once the compilation process has finished, you can install the extension (but this will require you to either run as the operating system user that manages the cluster, or via sudo):
+
+$ sudo make install
+/bin/mkdir -p '/usr/local/lib/postgresql'
+/bin/mkdir -p '/usr/local/share/postgresql/extension'
+/bin/mkdir -p '/usr/local/share/postgresql/extension'
+/bin/mkdir -p '/usr/local/share/doc/postgresql/extension'
+/usr/bin/install -c -m 755  orafce.so '/usr/local/lib/postgresql/orafce.so'
+/usr/bin/install -c -m 644 .//orafce.control '/usr/local/share/postgresql/extension/'
+/usr/bin/install -c -m 644 .//orafce--3.9.sql .//orafce--3.2--3.3.sql .//orafce--3.3--3.4.sql .//orafce--3.4--3.5.sql .//orafce--3.5--3.6.sql .//orafce--3.6--3.7.sql .//orafce--3.7--3.8.sql .//orafce--3.8--3.9.sql  '/usr/local/share/postgresql/extension/'
+/usr/bin/install -c -m 644 .//README.asciidoc .//COPYRIGHT.orafce .//INSTALL.orafce '/usr/local/share/doc/postgresql/extension/'
+
+
+And you are done: the extension has been deployed to the cluster and you can use into your databases via the CREATE EXTENSION statement.
+
+** DONE Using an installed extension
+
+
+Once the extension has been installed, that means deployed to the PostgreSQL cluster either manually or via pgxn, you can create the extension into every single database you need it for.
+The Orafce extension must be created by a superuser, so you need to connect to the database as an administrator in order to execute the CREATE EXTENSION statement:
+
+
+$ psql  -U postgres forumdb
+psql (12.1, server 12.2)
+Type "help" for help.
+
+forumdb=# CREATE EXTENSION orafce;
+CREATE EXTENSION
+
+
+If you now inspect the extensions installed into the database, you will see the freshly created Orafce at the version 3.9, the same we found when searching the extension with pgxn:
+
+
+forumdb=# \dx
+                                                  List of installed extensions
+  Name   | Version |   Schema   |                                          Description
+---------+---------+------------+-----------------------------------------------------------------------------------------------
+ orafce  | 3.9     | public     | Functions and operators that emulate a subset of functions and packages from the Oracle RDBMS
+ plpgsql | 1.0     | pg_catalog | PL/pgSQL procedural language
+(2 rows)
+
+
+Once the extension has been installed into the database, every user can use it. As a simple test, you can query the DUAL table that Oracle has and that Orafce created for your legacy queries to continue to run:
+
+
+$ psql -U luca forumdb
+psql (12.1, server 12.2)
+Type "help" for help.
+
+forumdb=> SELECT 1 FROM dual;
+ ?column?
+----------
+        1
+(1 row)
+
+
+** DONE Removing an extension
+It could happen you don't need anymore an extension, and therefore you want to remove it from your cluster.
+
+If only a database does not need anymore the extension and its related stuff, you can issue a DROP EXTENSION statement and the extension will disappear from your database. Of course, in the case the extension has been installed as a database superuser, you need to issue the statement as a superuser too. With regard to the Orafce example, as a superuser you can do the following:
+
+
+$ psql -U postgres forumdb
+psql (12.1, server 12.2)
+Type "help" for help.
+
+forumdb=# DROP EXTENSION orafce;
+DROP EXTENSION
+
+As you can imagine, inspecting the extension list does not show anymore the Orafce entry, as well as all the features, including the table DUAL has disappeared:
+
+
+
+forumdb=# \dx
+ù                 List of installed extensions
+  Name   | Version |   Schema   |         Description
+---------+---------+------------+------------------------------
+ plpgsql | 1.0     | pg_catalog | PL/pgSQL procedural language
+(1 row)
+
+forumdb=# SELECT 1 FROM DUAL;
+ERROR:  relation "dual" does not exist
+LINE 1: SELECT 1 FROM DUAL;
+
+
+
+Having removed an extension from a single database does not remove it from other databases where you have executed an explicit CREATE EXTENSION, as well as it does not removes the extension files and libraries from the cluster share directory.
+The extact way of removing (undeploy) the extension from your cluster depends on the way you first installed it into the cluster.
+
+*** DONE Removing an extension installed via pgxn
+
+The uninstall command of pgxn performs the exact opposite actions than the install one: it removes all files related to an extension. The command line options are the same, and this leads us to execute a command as simple as the following one:
+
+
+
+$ pgxn uninstall orafce --sudo --verbose
+DEBUG: running pg_config --libdir
+DEBUG: running command: ['/usr/local/bin/pg_config', '--libdir']
+DEBUG: testing if /usr/local/lib is writable
+DEBUG: opening url: http://api.pgxn.org/index.json
+DEBUG: opening url: http://api.pgxn.org/dist/orafce.json
+INFO: best version: orafce 3.9.0
+...
+rm -f '/usr/local/lib/postgresql/orafce.so'
+rm -f '/usr/local/share/postgresql/extension'/orafce.control
+rm -f '/usr/local/share/postgresql/extension'/orafce--3.9.sql '/usr/local/share/postgresql/extension'/orafce--3.2--3.3.sql '/usr/local/share/postgresql/extension'/orafce--3.3--3.4.sql '/usr/local/share/postgresql/extension'/orafce--3.4--3.5.sql '/usr/local/share/postgresql/extension'/orafce--3.5--3.6.sql '/usr/local/share/postgresql/extension'/orafce--3.6--3.7.sql '/usr/local/share/postgresql/extension'/orafce--3.7--3.8.sql '/usr/local/share/postgresql/extension'/orafce--3.8--3.9.sql
+rm -f '/usr/local/share/doc/postgresql/extension'/README.asciidoc '/usr/local/share/doc/postgresql/extension'/COPYRIGHT.orafce '/usr/local/share/doc/postgresql/extension'/INSTALL.orafce
+
+
+As you can see from the bottom lines, all the files have been removed from the cluster share directory.
+The extension is therefore gone forever, and if you need to install it again you will need to restart from the very first step.
+
+
+
+*** DONE Removing an extension installed manually
+You need to use make again, this time with the uninstall command, from the diretory where you extracted the download compressed archive:
+
+
+$ cd orafce-3.9.0
+$ sudo make uninstall
+rm -f '/usr/local/lib/postgresql/orafce.so'
+rm -f '/usr/local/share/postgresql/extension'/orafce.control
+rm -f '/usr/local/share/postgresql/extension'/orafce--3.9.sql '/usr/local/share/postgresql/extension'/orafce--3.2--3.3.sql '/usr/local/share/postgresql/extension'/orafce--3.3--3.4.sql '/usr/local/share/postgresql/extension'/orafce--3.4--3.5.sql '/usr/local/share/postgresql/extension'/orafce--3.5--3.6.sql '/usr/local/share/postgresql/extension'/orafce--3.6--3.7.sql '/usr/local/share/postgresql/extension'/orafce--3.7--3.8.sql '/usr/local/share/postgresql/extension'/orafce--3.8--3.9.sql
+rm -f '/usr/local/share/doc/postgresql/extension'/README.asciidoc '/usr/local/share/doc/postgresql/extension'/COPYRIGHT.orafce '/usr/local/share/doc/postgresql/extension'/INSTALL.orafce
+
+* DONE Creating your own extension
+  CLOSED: [2020-03-04 mer 16:20]
+
+In this section we will build an extension from scratch, so that you will better understand how they are made up. The idea is to let you know how to convert even your own SQL scripts into an extension, with all the advantages that an extension can provide to you in term of manageability.
+
+** DONE Defining an example extension
+   CLOSED: [2020-03-04 mer 16:20]
+
+In order to demonstrate how to build your own extension, we are going to create a simple extension that applies to the forum database providing some more features. In particular, we are going to define an extension named tagext that will provide an utility function that, given a particular tag, it will return the full path to that tag with all ancestors. For example, the tag Linux is a child of the tag "Operating Systems" and therefore the path to the tag Linux is "Operating System > Linux".
+
+In particular we want our extension to provide us a function named tag_path that, given a tag, provides the tag path as in the following example:
+
+
+forumdb=> SELECT tag_path( 'Kubuntu' );
+                   tag_path                   
+----------------------------------------------
+ Operating Systems > Linux > Ubuntu > Kubuntu
+(1 row)
+
+
+** DONE Creating the Extension Files
+   CLOSED: [2020-03-04 mer 15:57]
+
+Let's start with the control file first, where we insert some basic information about our extension:
+
+
+comment = 'Tag Programming Example Extension'
+default_version = '1.0'
+superuser       = false
+relocatable     = true
+
+
+The control file, named tagext.control, contains a comment that describes the extension to other administrators, specifies the default_version, that is the version to be installed if none is specified by the user, and dictates that this extension can be installed by any user (superuser = false) and moved to any schema the user wishes to (relocatable = true).
+
+Then it comes the Makefile, that is the file that will build and install the extension:
+
+
+EXTENSION = tagext
+DATA = tagext--1.0.sql
+
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)
+
+
+The Makefile is very simple and can be used as a scheleton for other extension Makefiles. In particular we define the name of the extension we are going to manage via this Makefile, as well as the file to use for producing the extension content: this is specified in the DATA variable and therefore we are instrumenting the system to use the file tagext--1.0.sql to be used to create the objects this extension provides.
+The tailing lines define to use the PGXS build infrastructure and in particular are used to include the PGXS base Makefile, that is computed from the output of the pg_config command.
+
+
+With all the infrastructure in place, it is now possible to define the content of the extension, therefore the tagext--1.0.sql file contains the definition of a function (see chapter 7) that, given a specific tag, returns the text representation of the tag path with all the ancestors:
+
+
+
+
+CREATE OR REPLACE FUNCTION tag_path( tag_to_search text )
+RETURNS TEXT
+AS $CODE$
+DECLARE
+  tag_path text;
+  current_parent_pk int;
+BEGIN
+
+  tag_path = tag_to_search;
+
+  SELECT parent
+  INTO   current_parent_pk
+  FROM   tags
+  WHERE  tag = tag_to_search;
+
+  -- here we must loop
+  WHILE current_parent_pk IS NOT NULL LOOP
+      SELECT parent, tag || ' > ' || tag_path
+      INTO   current_parent_pk, tag_path
+      FROM   tags
+      WHERE  pk = current_parent_pk;
+  END LOOP;
+
+  RETURN tag_path;
+END
+$CODE$
+LANGUAGE plpgsql;
+
+
+
+The function works by taking a tag as argument, then querying the tags table to get the parent primary key, and then looping on every parent tag. At every loop, the tag_path text string is enriched by the parent tag name, so that the end result is to have a string like 'parent 1 > parent 2 > child'.
+
+Once all the files are ready, we will have a situation like the following with the Makefile, the control file and the extension content file:
+
+$ ls -1
+Makefile
+tagext--1.0.sql
+tagext.control
+
+
+** DONE Installing the extension into the cluster
+   CLOSED: [2020-03-04 mer 15:45]
+
+Having all the pieces in places, it is possible to use the Makefile to install (deploy) the extension into the cluster:
+
+
+
+$ sudo make install 
+/bin/mkdir -p '/usr/local/share/postgresql/extension'
+/bin/mkdir -p '/usr/local/share/postgresql/extension'
+/usr/bin/install -c -m 644 .//tagext.control '/usr/local/share/postgresql/extension/'
+/usr/bin/install -c -m 644 .//tagext--1.0.sql  '/usr/local/share/postgresql/extension/'
+
+
+
+and it is now possible to install the extension into the forum database by means of CREATE EXTENSION and then try to execute the function the extension defines:
+
+
+
+forumdb=> CREATE EXTENSION tagext;
+CREATE EXTENSION
+
+forumdb=> \dx tagext
+                 List of installed extensions
+  Name  | Version | Schema |            Description            
+--------+---------+--------+-----------------------------------
+ tagext | 1.0     | public | Tag Programming Example Extension
+(1 row)
+
+
+forumdb=> SELECT tag_path( 'Kubuntu' );
+                   tag_path                   
+----------------------------------------------
+ Operating Systems > Linux > Ubuntu > Kubuntu
+(1 row)
+
+
+The function works and can build up a tag tree or path for the specified tag, with all its ancestors, as well as PostgreSQL reports the extension is at the version 1.0.
+
+
+
+
+
+** DONE Creating an extension upgrade
+   CLOSED: [2020-03-04 mer 16:12]
+
+Imagine we want to enrich our extension function so that the user is able to specify the tag separator in the path output. We can produce a new version of the function, drop the old one and allow the user to upgrade the extension with the new content.
+
+Let's start by creating an upgrade of the content of the extension, that is the function the extension provides. First of all, create a file named tagext--1.0--1.1.sql and place the following content into it:
+
+
+DROP FUNCTION IF EXISTS tag_path( text );
+
+CREATE OR REPLACE FUNCTION tag_path( tag_to_search text,
+                                     delimiter text DEFAULT ' > ' )
+RETURNS TEXT
+AS $CODE$
+DECLARE
+  tag_path text;
+  current_parent_pk int;
+BEGIN
+
+  tag_path = tag_to_search;
+
+  SELECT parent
+  INTO   current_parent_pk
+  FROM   tags
+  WHERE  tag = tag_to_search;
+
+  -- here we must loop
+  WHILE current_parent_pk IS NOT NULL LOOP
+      SELECT parent, tag || delimiter || tag_path
+      INTO   current_parent_pk, tag_path
+      FROM   tags
+      WHERE  pk = current_parent_pk;
+  END LOOP;
+
+  RETURN tag_path;
+END
+$CODE$
+LANGUAGE plpgsql;
+
+
+The file performs first a drop of the older version of the function (if that exists and has been installed by the previous version of this extension). After that, a new function with an additional optional parameter is created. The function does exactly the same job as the previous one, but this time it exploits the variable delimiter to separate multiple tags.
+
+
+Since we added a new file to the extension, we need to inform the Makefile about such file and therefore we have to add the new file to the DATA variable, so that the Makefile content looks like the following:
+
+
+
+EXTENSION = tagext
+DATA = tagext--1.0.sql tagext--1.0--1,1.sql
+
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)
+
+
+
+
+** DONE Performing an extension upgrade
+   CLOSED: [2020-03-04 mer 16:17]
+
+With the new Makefile and the tagext--1.0--1.1.sql files, the situation on the disk looks like the following:
+
+
+$ ls -1 
+Makefile
+tagext--1.0--1.1.sql
+tagext--1.0.sql
+tagext.control
+
+
+
+It is therefore now possible to install (deploy) the extention to the cluster running again an install command:
+
+
+$ sudo make install
+/bin/mkdir -p '/usr/local/share/postgresql/extension'
+/bin/mkdir -p '/usr/local/share/postgresql/extension'
+/usr/bin/install -c -m 644 .//tagext.control '/usr/local/share/postgresql/extension/'
+/usr/bin/install -c -m 644 .//tagext--1.0.sql .//tagext--1.0--1.1.sql  '/usr/local/share/postgresql/extension/'
+
+
+And within the database, it is possible to upgrade the extension with an ALTER EXTENSION:
+
+
+forumdb=> ALTER EXTENSION tagext UPDATE TO '1.1';
+ALTER EXTENSION
+
+forumdb=> \dx tagext
+                 List of installed extensions
+  Name  | Version | Schema |            Description            
+--------+---------+--------+-----------------------------------
+ tagext | 1.1     | public | Tag Programming Example Extension
+(1 row)
+
+
+As you can see, the extension version is now at 1.1, so that it is possible to invoke the tag_path function with or without the new argument:
+
+
+
+
+forumdb=> SELECT tag_path( 'Kubuntu' );
+                   tag_path                   
+----------------------------------------------
+ Operating Systems > Linux > Ubuntu > Kubuntu
+(1 row)
+
+forumdb=> SELECT tag_path( 'Kubuntu', ' --> ' );
+                      tag_path                      
+----------------------------------------------------
+ Operating Systems --> Linux --> Ubuntu --> Kubuntu
+(1 row)
+
+
+* DONE Summary
+  CLOSED: [2020-03-04 mer 16:33]
+
+This chapter has introduced you to the extension ecosystem, a very rich and powerful system to package related objects and manage them as a single unit. Extensions provide a way to add new features to your cluster and your databases, and most notably provide a clear and concise way of building updates and repeatable installation, easing therefore the distribution of the features to other clusters and databases.
+
+Thanks to the PGXS building infrastructure, creating an extension from scratch is comphrensive and quite easy, while thanks to tools like pgxnclient managing lot of extension can be automated.
+
+In the next chapter you will learn how to take care of the status and performances of your cluster.
+
+
+* DONE References
+  CLOSED: [2020-03-04 mer 16:24]
+PostgreSQL 12 official documentation about extension, <https://www.postgresql.org/docs/12/extend-extensions.html>
+
+
+PostgreSQL 12 official documentation about the extension build system (PGXS), <https://www.postgresql.org/docs/12/extend-pgxs.html>
+
+
+pgxnclient official repository <https://pypi.org/project/pgxnclient/>
+
+pgxnclient official documentation <https://pgxn.github.io/pgxnclient/>
+
+PostgreSQL 11 Server Side Programming - Quick Start Guide, Packt Publishing
