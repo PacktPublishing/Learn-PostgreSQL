@@ -67,3 +67,44 @@ psql -U luca forumdb
 pg_dumpall -U postgres -f cluster.sql
 
 less cluster.sql
+
+pg_dump -U postgres -Fd -f backup_forumdb -v -j 3 forumdb
+
+psql -U postgres -c "DROP DATABASE forumdb;" template1
+
+pg_restore -C -d template1 -U postgres -j 2 -v backup_forumdb/
+
+crontab -e
+
+#Inside the crontab
+30 23 * * * pg_dump -Fc -f /backup/forumdb,backup -U postgres forumdb
+
+
+#bash script at page 19 my_backup_script.sh
+#!/bin/sh
+BACKUP_ROOT=/backup
+for database in $( psql -U postgres -A -t -c "SELECT datname FROM
+pg_database WHERE datname <> 'template0'" template1 )
+do
+  backup_dir=$BACKUP_ROOT/$database/$(date +'%Y-%m-%d')
+  if [ -d $backup_dir ]; then
+      echo "Skipping backup $database, already done today!"
+      continue
+  fi
+  mkdir -p $backup_dir
+  pg_dump -U postgres -Fd -f $backup_dir $database
+  echo "Backup $database into $backup_dir done!"
+done
+
+#Inside the crontab
+30 23 * * * my_backup_script.sh
+
+sudo -u postgres pg_basebackup -D /backup/pg_backup -l 'My Physical Backup' -v -h localhost -p 5432 -U postgres
+
+sudo -u postgres pg_basebackup -D /backup/pg_backup -l 'My Physical Backup' -v -h localhost -p 5432 -U postgres
+
+sudo -u postgres pg_verifybackup /backup/pg_backup
+
+sudo -u postgres pg_ctl -D /backup/pg_backup -o '-p 5433' start
+
+sudo cat /backup/pg_backup/log/postgresql-2020-05-10.log
