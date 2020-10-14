@@ -1,6 +1,6 @@
 # Learn PostgreSQL
 
-<a href="https://www.packtpub.com/product/learn-postgresql/9781838985288"><img src="https://static.packt-cdn.com/products/9781838985288/cover/smaller" alt="Learn PostgreSQL" height="256px" align="right"></a>
+<a href="https://www.packtpub.com/product/learn-postgresql/9781838985288"><img src="https://static.packt-cdn.com/products/9781838985288/cover/smalle" alt="Learn PostgreSQL" height="256px" align="right"></a>
 
 This is the code repository for [Learn PostgreSQL](https://www.packtpub.com/product/learn-postgresql/9781838985288), published by Packt.
 
