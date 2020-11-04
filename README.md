@@ -44,6 +44,8 @@ With the following software and hardware list you can run all code files present
 
 We also provide a PDF file that has color images of the screenshots/diagrams used in this book. [Click here to download it](https://static.packt-cdn.com/downloads/9781838985288_ColorImages.pdf).
 
+## Errata
+* Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
 
 ### Related products 
 * Mastering PostgreSQL 12 [[Packt]](https://www.packtpub.com/product/mastering-postgresql-12-third-edition/9781838988821) [[Amazon]](https://www.amazon.com/dp/1838988823)
