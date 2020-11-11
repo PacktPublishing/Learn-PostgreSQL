@@ -46,6 +46,7 @@ We also provide a PDF file that has color images of the screenshots/diagrams use
 
 ## Errata
 * Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
+* Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
 
 ### Related products 
 * Mastering PostgreSQL 12 [[Packt]](https://www.packtpub.com/product/mastering-postgresql-12-third-edition/9781838988821) [[Amazon]](https://www.amazon.com/dp/1838988823)
