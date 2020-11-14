@@ -4,7 +4,7 @@ This repository is related to the Packt book **[Learn PostgreSQL](https://www.pa
 
 <center>
 <a href="https://www.packtpub.com/data/learn-postgresql-12" target="_blank" >
-<img src="https://www.packtpub.com/media/catalog/product/cache/4cdce5a811acc0d2926d7f857dceb83b/9/7/9781838985288-original_45.jpeg" alt="Learn PostgreSQL" />
+<img src="https://static.packt-cdn.com/products/9781838985288/cover/smaller" alt="Learn PostgreSQL" />
 </a>
 </center>
 
