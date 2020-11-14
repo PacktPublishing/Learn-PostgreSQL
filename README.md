@@ -42,11 +42,9 @@ With the following software and hardware list you can run all code files present
 | 1        | PostgreSQL 12 - 13                  | Linux OS / FreeBSD |
 
 
-We also provide a PDF file that has color images of the screenshots/diagrams used in this book. [Click here to download it](https://static.packt-cdn.com/downloads/9781838985288_ColorImages.pdf).
+[We also provide a PDF file](https://static.packt-cdn.com/downloads/9781838985288_ColorImages.pdf)
+that has color images of the screenshots/diagrams used in this book.
 
-## Errata
-* Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
-* Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
 
 ### Related products 
 * Mastering PostgreSQL 12 [[Packt]](https://www.packtpub.com/product/mastering-postgresql-12-third-edition/9781838988821) [[Amazon]](https://www.amazon.com/dp/1838988823)
@@ -63,3 +61,10 @@ has been passionate about computer science since he was a 13-year-old, his first
 
 ### Suggestions and Feedback
 [Click here](https://docs.google.com/forms/d/e/1FAIpQLSdy7dATC6QmEL81FIUuymZ0Wy9vH1jHkvpY57OiMeKGqib_Ow/viewform) if you have any feedback or suggestions.
+
+
+#### Errata
+* Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
+* Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
+
+
