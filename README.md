@@ -22,18 +22,124 @@ If you feel this book is for you, get your [copy](https://www.amazon.com/dp/1838
 alt="https://www.packtpub.com/" border="5" /></a>
 
 
-## Instructions and Navigations
-All of the code is organized into folders. For example, Chapter02.
+## Book Outline
 
-The code will look like the following:
-```
+This Postgres book is for anyone interested in learning about the PostgreSQL database from scratch. Anyone looking to build robust data warehousing applications and scale the database for high-availability and performance using the latest features of PostgreSQL will also find this book useful. Although prior knowledge of PostgreSQL is not required, familiarity with databases is expected.
+
+
+The book is divided into five main parts. The following is a list of the book chapters.
+
+### Part 1
+
+1) Introduction to PostgreSQL
+2) Getting to know your cluster
+3) Managing Users and Connections
+
+### Part 2
+
+4) Basic Statements
+5) Advanced Statements
+6) Window Functions
+7) Server Side Programming
+8) Triggers and Rules
+9) Partitioning
+
+### Part 3
+
+10)	Users, Roles and Database Security
+11)	Transactions, MVCC, WALs and Checkpoints
+12)	Extending the database: the Extension ecosystem
+13)	Indexes and Performance Optimization
+14)	Logging and Auditing
+15)	Backup and Restore
+16)	Configuration and Monitoring
+
+### Part 4
+
+17) Physical Replication
+18) Logical Replication
+
+### Part 5
+
+19) Usefult tools and useful extensions
+20) Towards PostgreSQL 13
+
+
+
+## Chapters Content
+
+Every chapter will have the following main structure:
+- a *What you will learn* bullet list that summarize what the reader will learn thru the chapter;
+- a *What you need to know* bullet list that reminds the user basic knowledge **required** to fully understand the contents of the chapter;
+- an *abstract* that introduces the chapter content at glance;
+- a *conclusion* section that provides a summary of the chapter and focus on the main concepts;
+- a *reference* section with links to documentation, articles and external resources.
+
+
+## Content of this repository
+
+This repository contains ongoing stuff related to the book, including code examples.
+
+### Naming conventions used in this repository
+
+Every chapter has its own folder named after the chapter number, for instance `Chapter01` for the very first chapter.
+
+In order to ease the execution of the code examples by readers, every chapter will have a set of source scripts that the reader can immediatly load into her database.
+
+Every file is named after the its type, for example `.sql` for an SQL script or a collection of SQL statements.
+
+
+### Pictures
+
+Any picture will be named with the pattern `Chapter<CC>_picture<PP>.<type>` where:
+- `CC` is the chapter number;
+- `PP` is the picture number as listed within the chapter;
+- `type` is a suffix related to the picture file type (e.g., `png` for a Portable Network Graphic image).
+
+*Images could appear differently from the printed book due to graphical needs*.
+
+### Command prompts
+
+In the book code listings and examples, the command prompts are one of the two that follows:
+- a `$` stands for an Unix shell prompt (like Bourne, Bash, Zsh);
+- a `forumdb=>` stands for the `psql(1)` command prompt when an active connection to the database is opened.
+
+As an example, the following is a command issued on the operating system:
+
+```shell
 $ sudo service postgresql restart
 ```
 
-**Following is what you need for this book:**
-This Postgres book is for anyone interested in learning about the PostgreSQL database from scratch. Anyone looking to build robust data warehousing applications and scale the database for high-availability and performance using the latest features of PostgreSQL will also find this book useful. Although prior knowledge of PostgreSQL is not required, familiarity with databases is expected.
+while the following is a query issued within an active database connection:
 
-With the following software and hardware list you can run all code files present in the book (Chapter 1-20).
+```sql
+forumdb=> SELECT CURRENT_TIMESTAMP;
+```
+
+### Administrative/Superusers command prompts
+
+Whenere there is the need to execute a command or a statement with administrative privileges, the command prompt will reflect it using a `#` sign as the end part of the command prompt. For example, the following is an SQL statement issued as PostgreSQL administrator:
+
+```sql
+forumdb=# SELECT pg_terminate_backend( 987 );
+```
+
+Please note the presence of the `#` in the `forumdb=#` prompt, as opposed to the `>` sign in the normal user `forumdb=>` prompt.
+
+In the case a command on the operating system must be run with superuser (`root`) privileges, the command will be run via `sudo(1)`, as in:
+
+```sql
+$ sudo initdb -D /postgres/12
+```
+
+and therefore in this case the command prompt will not change, rather the presence of the `sudo(1)` command indicates `root` privileges are required.
+
+## Creating the example database
+
+The book is built over an example database that implements an *online forum* storage. In order to be able to execute any example of any chapter, the reader has to initialize the forum database.
+
+The scripts in the folder `setup`, executed in lexicographically order, implement the example database and setup the environment so that other examples can be run against the database.
+
 
 ### Software and Hardware List
 
@@ -47,9 +153,10 @@ that has color images of the screenshots/diagrams used in this book.
 
 
 ### Related products 
-* Mastering PostgreSQL 12 [[Packt]](https://www.packtpub.com/product/mastering-postgresql-12-third-edition/9781838988821) [[Amazon]](https://www.amazon.com/dp/1838988823)
+- Mastering PostgreSQL 12 [[Packt]](https://www.packtpub.com/product/mastering-postgresql-12-third-edition/9781838988821) [[Amazon]](https://www.amazon.com/dp/1838988823)
+- PostgreSQL 12 High Availability Cookbook - Third Edition [[Packt]](https://www.packtpub.com/product/postgresql-12-high-availability-cookbook-third-edition/9781838984854) [[Amazon]](https://www.amazon.com/dp/1838984852)
+- PostgreSQL 11 Server Side Programming - Quick Start Guide [[Packt]](https://www.packtpub.com/product/postgresql-11-server-side-programming-quick-start-guide/9781789342222) [[Amazon]](https://www.amazon.com/PostgreSQL-Server-Programming-Quick-Start-ebook/dp/B07L1MP1F8/ref=sr_1_1?crid=2I7PGMZDCI9O0&dchild=1&keywords=postgresql+11+server+side+programming+quick+start+guide&qid=1605375687&sprefix=postgresql+11+server+%2Caps%2C278&sr=8-1)
 
-* PostgreSQL 12 High Availability Cookbook - Third Edition [[Packt]](https://www.packtpub.com/product/postgresql-12-high-availability-cookbook-third-edition/9781838984854) [[Amazon]](https://www.amazon.com/dp/1838984852)
 
 ## Get to Know the Authors
 **Luca Ferrari**
