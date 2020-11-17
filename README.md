@@ -173,6 +173,7 @@ has been passionate about computer science since he was a 13-year-old, his first
 #### Errata
 * Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
 * Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
+* Page 151 (The ROW_NUMBER function, first query): The query _should be_ `select category, count(*) over w`**`, row_number() over w`**` from posts WINDOW w as (partition by category) order by category`**;
 * Page 122 (Using FULL OUTER JOIN, point 2): **`j_tags_posts`** _should be_ **`j_posts_tags`**
 
 
