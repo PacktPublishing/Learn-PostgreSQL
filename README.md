@@ -9,7 +9,7 @@
 ## What is this book about?
 PostgreSQL is one of the fastest-growing open source object-relational database management systems (DBMS) in the world. As well as being easy to use, it’s scalable and highly efficient. In this book, you’ll explore PostgreSQL 12 and 13 and learn how to build database solutions using it. Complete with hands-on tutorials, this guide will teach you how to achieve the right database design required for a reliable environment.
 
-This book covers the following exciting features: 
+This book covers the following exciting features:
 * Understand how users and connections are managed by running a PostgreSQL instance
 * Interact with transaction boundaries using server-side programming
 * Identify bottlenecks to maintain your database efficiently
@@ -18,7 +18,7 @@ This book covers the following exciting features:
 
 If you feel this book is for you, get your [copy](https://www.amazon.com/dp/183898528X) today!
 
-<a href="https://www.packtpub.com/?utm_source=github&utm_medium=banner&utm_campaign=GitHubBanner"><img src="https://raw.githubusercontent.com/PacktPublishing/GitHub/master/GitHub.png" 
+<a href="https://www.packtpub.com/?utm_source=github&utm_medium=banner&utm_campaign=GitHubBanner"><img src="https://raw.githubusercontent.com/PacktPublishing/GitHub/master/GitHub.png"
 alt="https://www.packtpub.com/" border="5" /></a>
 
 
@@ -152,7 +152,7 @@ The scripts in the folder `setup`, executed in lexicographically order, implemen
 that has color images of the screenshots/diagrams used in this book.
 
 
-### Related products 
+### Related products
 - Mastering PostgreSQL 12 [[Packt]](https://www.packtpub.com/product/mastering-postgresql-12-third-edition/9781838988821) [[Amazon]](https://www.amazon.com/dp/1838988823)
 - PostgreSQL 12 High Availability Cookbook - Third Edition [[Packt]](https://www.packtpub.com/product/postgresql-12-high-availability-cookbook-third-edition/9781838984854) [[Amazon]](https://www.amazon.com/dp/1838984852)
 - PostgreSQL 11 Server Side Programming - Quick Start Guide [[Packt]](https://www.packtpub.com/product/postgresql-11-server-side-programming-quick-start-guide/9781789342222) [[Amazon]](https://www.amazon.com/PostgreSQL-Server-Programming-Quick-Start-ebook/dp/B07L1MP1F8/ref=sr_1_1?crid=2I7PGMZDCI9O0&dchild=1&keywords=postgresql+11+server+side+programming+quick+start+guide&qid=1605375687&sprefix=postgresql+11+server+%2Caps%2C278&sr=8-1)
@@ -172,7 +172,5 @@ has been passionate about computer science since he was a 13-year-old, his first
 
 #### Errata
 * Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
-* Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
 * Page 122 (Using FULL OUTER JOIN, point 2): **`j_tags_posts`** _should be_ **`j_posts_tags`**
-
-
+* Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
