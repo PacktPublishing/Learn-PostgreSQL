@@ -174,3 +174,8 @@ has been passionate about computer science since he was a 13-year-old, his first
 * Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
 * Page 122 (Using FULL OUTER JOIN, point 2): **`j_tags_posts`** _should be_ **`j_posts_tags`**
 * Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
+
+
+##### About GNU Debian and Ubuntu Repositories
+
+The installation examples in the chapter 1, with particular regard to the section *Installing PostgreSQL 12 on GNU/Linux Debian, Ubuntu and derivatives* refers to the adoption of PostgreSQL Global Development Groupd (*PGDG*) repositories, as specified at the first step in the example. If you are using your own distribution packages, without importing the PGDG repositories, you can find that the names of the packages are sligthly different from those in the example, with particular regard to the version numbers. 
