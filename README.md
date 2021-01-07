@@ -76,9 +76,9 @@ The book is divided into five main parts. The following is a list of the book ch
 Every chapter will have the following main structure:
 - a *What you will learn* bullet list that summarize what the reader will learn thru the chapter;
 - a *What you need to know* bullet list that reminds the user basic knowledge **required** to fully understand the contents of the chapter;
-- an *abstract* that introduces the chapter content at glance;
-- a *conclusion* section that provides a summary of the chapter and focus on the main concepts;
-- a *reference* section with links to documentation, articles and external resources.
+- an *Abstract* that introduces the chapter content at glance;
+- a *Conclusions* section that provides a summary of the chapter and focus on the main concepts;
+- a *References* section with links to documentation, articles and external resources.
 
 
 ## Content of this repository
@@ -129,7 +129,7 @@ Whenere there is the need to execute a command or a statement with administrativ
 forumdb=# SELECT pg_terminate_backend( 987 );
 ```
 
-Please note the presence of the `#` in the `forumdb=#` prompt, as opposed to the `>` sign in the normal user `forumdb=>` prompt.
+ùPlease note the presence of the `#` in the `forumdb=#` prompt, as opposed to the `>` sign in the normal user `forumdb=>` prompt.
 
 In the case a command on the operating system must be run with superuser (`root`) privileges, the command will be run via `sudo(1)`, as in:
 
