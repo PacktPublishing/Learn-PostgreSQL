@@ -13,6 +13,12 @@
   *
   * - every surrogated primary key is named 'pk' (as Primary Key);
   * - every table name is plural
+  *
+  * To use this script from an already established connection:
+  * template1=> \i 00-forum-database.sql
+  *
+  * or to use from a shell
+  * $ psql -U postgres template1 < 00-forum-database.sql
   */
 
 CREATE DATABASE forumdb;
