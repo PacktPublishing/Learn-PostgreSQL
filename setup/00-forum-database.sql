@@ -13,6 +13,12 @@
   *
   * - every surrogated primary key is named 'pk' (as Primary Key);
   * - every table name is plural
+  *
+  * To use this script from an already established connection:
+  * template1=> \i 00-forum-database.sql
+  *
+  * or to use from a shell
+  * $ psql -U postgres template1 < 00-forum-database.sql
   */
 
 CREATE DATABASE forumdb;
@@ -102,10 +108,6 @@ CREATE TABLE tags (
     , FOREIGN KEY( parent ) REFERENCES tags( pk )
     );
 
-    /*
-  TODO
-  create a recursive CTE to display a tag hierarchy
-  */
 
 CREATE TABLE j_posts_tags (
     tag_pk    int NOT NULL
@@ -115,9 +117,4 @@ CREATE TABLE j_posts_tags (
     , FOREIGN KEY( post_pk ) REFERENCES posts( pk )
     );
 
-    /*
-  TODO
-  create a trigger that does not allow to add a tag and its parent to the same post?
-  for example having 'database > postgresql > psql' it should not be possible
-  to add at the same time 'database' and 'psql' to the same post
-  */
+

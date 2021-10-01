@@ -1,8 +1,3 @@
-## $5 Tech Unlocked 2021!
-[Buy and download this Book for only $5 on PacktPub.com](https://www.packtpub.com/product/learn-postgresql/9781838985288)
------
-*If you have read this book, please leave a review on [Amazon.com](https://www.amazon.com/gp/product/183898528X).     Potential readers can then use your unbiased opinion to help them make purchase decisions. Thank you. The $5 campaign         runs from __December 15th 2020__ to __January 13th 2021.__*
-
 # Learn PostgreSQL
 
 <a href="https://www.packtpub.com/product/learn-postgresql/9781838985288"><img src="https://static.packt-cdn.com/products/9781838985288/cover/smaller" alt="Learn PostgreSQL" height="256px" align="right"></a>
@@ -25,6 +20,16 @@ If you feel this book is for you, get your [copy](https://www.amazon.com/dp/1838
 
 <a href="https://www.packtpub.com/?utm_source=github&utm_medium=banner&utm_campaign=GitHubBanner"><img src="https://raw.githubusercontent.com/PacktPublishing/GitHub/master/GitHub.png"
 alt="https://www.packtpub.com/" border="5" /></a>
+
+## Errata
+
+It is regarding To get the most out of this book section.
+
+**Page 5**
+
+It is: All the SQL examples can be run using the psql program or using the GUI tool pdAdmin.
+
+Should be: All the SQL examples can be run using the psql program or using the GUI tool pgAdmin.
 
 
 ## Book Outline
@@ -144,6 +149,32 @@ and therefore in this case the command prompt will not change, rather the presen
 The book is built over an example database that implements an *online forum* storage. In order to be able to execute any example of any chapter, the reader has to initialize the forum database.
 
 The scripts in the folder `setup`, executed in lexicographically order, implement the example database and setup the environment so that other examples can be run against the database.
+
+In particular, in order to get the database structure as shown in Chapter 4 and the followings, you have to executed something has follows:
+
+```shell
+psql -U <your-username> -h <database-host> < setup/00-forum-database.sql
+```
+
+where
+- `your-username` is a PostgreSQL username of choice;
+- `database-host` is the host the database is running on, if different from `localhost`.
+
+The end result will be to have the `forumdb` created and populated with tables.
+You can also invoke the script interactively from within a `psql` connection, such as:
+
+```shell
+psql -U <your-username> -h <database-host> template1
+
+template1=> \i setup/-00-forum-database.sql
+```
+
+The simplest form to get the example database up and running is the following one (assuming you are running PostgreSQL locally):
+
+```shell
+$ psql -U postgres   template1 -c 'CREATE ROLE forumdb_user WITH LOGIN CREATEDB;'
+$ psql -U forum_user template1 < setup/00-forum-database.sql
+```
 
 
 ### Software and Hardware List
