@@ -176,6 +176,7 @@ has been passionate about computer science since he was a 13-year-old, his first
 
 
 #### Errata
+* Page 42 (The template databases): in the code section the command shown is `psql -l`. Unluckily, the first line of command output, that reports `List of databases`, has been placed on the right side of the very same line of the command. In order to reproduce the command, you need to copy and execute only the **`psql -l`** command (reported errata *CA162683* on 2021-09-30);
 * Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
 * Page 122 (Using FULL OUTER JOIN, point 2): **`j_tags_posts`** _should be_ **`j_posts_tags`**
 * Page 152 (`LAST_VALUE` Window Function): the query `select category, row_number() over w, title, last_value(title) over w
@@ -185,7 +186,7 @@ from posts WINDOW w as (partition by category order by category) order by catego
 
 ##### About GNU Debian and Ubuntu Repositories
 
-The installation examples in the chapter 1, with particular regard to the section *Installing PostgreSQL 12 on GNU/Linux Debian, Ubuntu and derivatives* refers to the adoption of PostgreSQL Global Development Groupd (*PGDG*) repositories, as specified at the first step in the example. 
+The installation examples in the chapter 1, with particular regard to the section *Installing PostgreSQL 12 on GNU/Linux Debian, Ubuntu and derivatives* refers to the adoption of PostgreSQL Global Development Groupd (*PGDG*) repositories, as specified at the first step in the example.
 
 Since PostgreSQL 10, both the GNU Debian and Ubuntu operating system families have renamed the *PostgreSQL Contrib* module removing the version number suffix, therefore the right package to install is `postgresql-contrib` instead of the one presented in the installation instruction in the above chapter, wrongly named `postgresql-contrib-12`.
 
