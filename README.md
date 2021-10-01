@@ -21,16 +21,6 @@ If you feel this book is for you, get your [copy](https://www.amazon.com/dp/1838
 <a href="https://www.packtpub.com/?utm_source=github&utm_medium=banner&utm_campaign=GitHubBanner"><img src="https://raw.githubusercontent.com/PacktPublishing/GitHub/master/GitHub.png"
 alt="https://www.packtpub.com/" border="5" /></a>
 
-## Errata
-
-It is regarding To get the most out of this book section.
-
-**Page 5**
-
-It is: All the SQL examples can be run using the psql program or using the GUI tool pdAdmin.
-
-Should be: All the SQL examples can be run using the psql program or using the GUI tool pgAdmin.
-
 
 ## Book Outline
 
@@ -207,6 +197,7 @@ has been passionate about computer science since he was a 13-year-old, his first
 
 
 #### Errata
+* Page 5: the sentence "All the SQL examples can be run using the psql program or using the GUI tool pdAdmin." should be "All the SQL examples can be run using the psql program or using the GUI tool pgAdmin."
 * Page 42 (The template databases): in the code section the command shown is `psql -l`. Unluckily, the first line of command output, that reports `List of databases`, has been placed on the right side of the very same line of the command. In order to reproduce the command, you need to copy and execute only the **`psql -l`** command (reported errata *CA162683* on 2021-09-30);
 * Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
 * Page 122 (Using FULL OUTER JOIN, point 2): **`j_tags_posts`** _should be_ **`j_posts_tags`**
