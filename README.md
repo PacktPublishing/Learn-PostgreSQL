@@ -204,6 +204,7 @@ has been passionate about computer science since he was a 13-year-old, his first
 * Page 152 (`LAST_VALUE` Window Function): the query `select category, row_number() over w, title, last_value(title) over w
 from posts WINDOW w as (partition by category order by category) order by category;` should be *`select category, row_number () over w, title, last_value (title) over w from posts WINDOW w as (partition by category order by title) order by category;`*. For more information about this error, see the [issue #6](https://github.com/PacktPublishing/Learn-PostgreSQL/issues/6)
 * Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
+* Page 114 (Using the IN/NOT IN condition, last paragraph): **the values `pk=2` and `pk=4`** _should be_ **the single value `pk=11`**; **that have `pk=2` or `pk=4`** _should be_ **that have `category=11`**.
 
 
 ##### About GNU Debian and Ubuntu Repositories
