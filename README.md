@@ -213,3 +213,7 @@ The installation examples in the chapter 1, with particular regard to the sectio
 Since PostgreSQL 10, both the GNU Debian and Ubuntu operating system families have renamed the *PostgreSQL Contrib* module removing the version number suffix, therefore the right package to install is `postgresql-contrib` instead of the one presented in the installation instruction in the above chapter, wrongly named `postgresql-contrib-12`.
 
 The package `postgresql-contrib-12` is a virtual package that refers to `postgresql-12`, threfore to the whole server and not to the contrib module.
+### Download a free PDF
+
+ <i>If you have already purchased a print or Kindle version of this book, you can get a DRM-free PDF version at no cost.<br>Simply click on the link to claim your free PDF.</i>
+<p align="center"> <a href="https://packt.link/free-ebook/9781838985288">https://packt.link/free-ebook/9781838985288 </a> </p>
