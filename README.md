@@ -215,6 +215,7 @@ has been passionate about computer science since he was a 13-year-old, his first
 * Page 122 (Using FULL OUTER JOIN, point 2): **`j_tags_posts`** _should be_ **`j_posts_tags`**
 * Page 152 (`LAST_VALUE` Window Function): the query `select category, row_number() over w, title, last_value(title) over w
 from posts WINDOW w as (partition by category order by category) order by category;` should be *`select category, row_number () over w, title, last_value (title) over w from posts WINDOW w as (partition by category order by title) order by category;`*. For more information about this error, see the [issue #6](https://github.com/PacktPublishing/Learn-PostgreSQL/issues/6)
+* Page 271 (heading): **Partition Maintenance** should be a second level heading within the section *g declarative partitioning*;
 * Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
 
 
