@@ -109,6 +109,10 @@ Any picture will be named with the pattern `Chapter<CC>_picture<PP>.<type>` wher
 
 *Images could appear differently from the printed book due to graphical needs*.
 
+[We also provide a PDF file](https://static.packt-cdn.com/downloads/9781838985288_ColorImages.pdf)
+that has color images of the screenshots/diagrams used in this book.
+
+
 ### Command prompts
 
 In the book code listings and examples, the command prompts are one of the two that follows:
@@ -185,8 +189,6 @@ $ psql -U forum_user template1 < setup/00-forum-database.sql
 | 1        | PostgreSQL 12 - 13                  | Linux OS / FreeBSD |
 
 
-[We also provide a PDF file](https://static.packt-cdn.com/downloads/9781838985288_ColorImages.pdf)
-that has color images of the screenshots/diagrams used in this book.
 
 
 ### Related products
