@@ -221,11 +221,12 @@ from posts WINDOW w as (partition by category order by category) order by catego
 
 ##### About GNU Debian and Ubuntu Repositories
 
-The installation examples in the chapter 1, with particular regard to the section *Installing PostgreSQL 12 on GNU/Linux Debian, Ubuntu and derivatives* refers to the adoption of PostgreSQL Global Development Groupd (*PGDG*) repositories, as specified at the first step in the example.
+The installation example in the *Chapter 1*, with particular regard to the section *Installing PostgreSQL 12 on GNU/Linux Debian, Ubuntu and derivatives* refers to the adoption of the PostgreSQL Global Development Groupd (*PGDG*) repositories, as specified at the first step in the example.
 
-Since PostgreSQL 10, both the GNU Debian and Ubuntu operating system families have renamed the *PostgreSQL Contrib* module removing the version number suffix, therefore the right package to install is `postgresql-contrib` instead of the one presented in the installation instruction in the above chapter, wrongly named `postgresql-contrib-12`.
+Since PostgreSQL 10, both the GNU Debian and Ubuntu operating system families have renamed the *PostgreSQL Contrib* module removing the version number suffix, therefore the right package to install is `postgresql-contrib` instead of the one presented in the installation instruction in the first chapter, wrongly named `postgresql-contrib-12`.
 
 The package `postgresql-contrib-12` is a virtual package that refers to `postgresql-12`, threfore to the whole server and not to the contrib module.
+
 ### Download a free PDF
 
  <i>If you have already purchased a print or Kindle version of this book, you can get a DRM-free PDF version at no cost.<br>Simply click on the link to claim your free PDF.</i>
