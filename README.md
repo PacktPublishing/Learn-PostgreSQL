@@ -207,6 +207,7 @@ has been passionate about computer science since he was a 13-year-old, his first
 * Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
 * Page 122 (Using FULL OUTER JOIN, point 2): **`j_tags_posts`** _should be_ **`j_posts_tags`**
 * Page 143 (first bullet point): **let's create a table named `inserted_post`** should be **let's create a table named `inserted_posts`**;
+* Page 147, in the section entitled *The ROW NUMBER function*, the query placed in the book does not has the column `row_number` shown in the query output. The correct query to use is `select category,count(*) over w , row_number() over w from posts WINDOW w as (partition by category) order by category;`. that reports the output as shown in the section output.
 * Page 152 (`LAST_VALUE` Window Function): the query `select category, row_number() over w, title, last_value(title) over w
 from posts WINDOW w as (partition by category order by category) order by category;` should be *`select category, row_number () over w, title, last_value (title) over w from posts WINDOW w as (partition by category order by title) order by category;`*. For more information about this error, see the [issue #6](https://github.com/PacktPublishing/Learn-PostgreSQL/issues/6)
 * Page 271 (heading): **Partition Maintenance** should be a second level heading within the section *g declarative partitioning*;
