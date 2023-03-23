@@ -210,6 +210,7 @@ has been passionate about computer science since he was a 13-year-old, his first
 * Page 147, in the section entitled *The ROW NUMBER function*, the query placed in the book does not has the column `row_number` shown in the query output. The correct query to use is `select category,count(*) over w , row_number() over w from posts WINDOW w as (partition by category) order by category;`. that reports the output as shown in the section output.
 * Page 152 (`LAST_VALUE` Window Function): the query `select category, row_number() over w, title, last_value(title) over w
 from posts WINDOW w as (partition by category order by category) order by category;` should be *`select category, row_number () over w, title, last_value (title) over w from posts WINDOW w as (partition by category order by title) order by category;`*. For more information about this error, see the [issue #6](https://github.com/PacktPublishing/Learn-PostgreSQL/issues/6)
+* Page 174 (section **Chars with fixed-length data types**): the query reported in the example `3` is missing the `FROM` clause, and should be `select pk,tag,length(tag),octet_length(tag),char_length(tag) FROM new_tags;`
 * Page 271 (heading): **Partition Maintenance** should be a second level heading within the section *g declarative partitioning*;
 * Page 581 (Section 5, heading): **The PostegreSQL System** _should be_ **The PostgreSQL System**
 
