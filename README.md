@@ -204,6 +204,7 @@ has been passionate about computer science since he was a 13-year-old, his first
 #### Errata
 * Page 5: the sentence "All the SQL examples can be run using the psql program or using the GUI tool pdAdmin." should be "All the SQL examples can be run using the psql program or using the GUI tool pgAdmin."
 * Page 42 (The template databases): in the code section the command shown is `psql -l`. Unluckily, the first line of command output, that reports `List of databases`, has been placed on the right side of the very same line of the command. In order to reproduce the command, you need to copy and execute only the **`psql -l`** command (reported errata *CA162683* on 2021-09-30);
+* Page 61: the sentence **When you grant a role to another, the former becomes a member of the latter.** should be **When you grant a role to another, the latter becomes a member of the former.**
 * Page 82 (Dropping databases, first paragraph): **to drop a table** _should be_ **to drop a database**
 * Page 122 (Using FULL OUTER JOIN, point 2): **`j_tags_posts`** _should be_ **`j_posts_tags`**
 * Page 143 (first bullet point): **let's create a table named `inserted_post`** should be **let's create a table named `inserted_posts`**;
